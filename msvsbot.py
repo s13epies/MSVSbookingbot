@@ -806,8 +806,12 @@ def main() -> None:
     init_testing_deploy()
     TOKEN = os.environ.get('TELE_BOT_TOKEN')
     N = 'msvs-bot'
-    print(TOKEN)
-    updater = Updater(TOKEN)
+    DATABASE_URL = os.environ['DATABASE_URL']
+    if('postgresql' not in DATABASE_URL):
+        DATABASE_URL = DATABASE_URL.replace('postgres','postgresql',1)
+        
+    pers = PostgresPersistence(url=DATABASE_URL)
+    updater = Updater(TOKEN, persistence=pers)
 
     # Get the dispatcher to register handlers
     dispatcher = updater.dispatcher
