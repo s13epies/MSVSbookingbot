@@ -413,7 +413,7 @@ def time(update: Update, context: CallbackContext) -> int:
     dayend_dt = (bd+timedelta(days=1))
     page_token = None
     while True:
-        events = service.events().list(calendarId=calendarId, pageToken=page_token, timeMin=daystart_dt.isoformat(), timeMax = dayend_dt.isoformat()).execute()
+        events = service.events().list(calendarId=calendarId, pageToken=page_token, timeMin=daystart_dt.isoformat(), timeMax = dayend_dt.isoformat(), orderBy='startTime').execute()
         for event in events['items']:
             event_list.append({
                 'summary':event['summary'],
@@ -860,7 +860,7 @@ def main() -> None:
     
     # Setup conversation for viewing image
     view_day_handler = ConversationHandler(
-        entry_points=[CommandHandler('viewDay', viewDay)],
+        entry_points=[CommandHandler('viewday', viewDay)],
         states={
             DATE: [
                 MessageHandler(Filters.text & ~Filters.command, viewDayHandler)
