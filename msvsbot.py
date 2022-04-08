@@ -146,7 +146,7 @@ def rankname(update: Update, context: CallbackContext) -> int:
         return AUTH
     context.user_data['phone']=phone
     logger.info('Asking user for rank and name')
-    context.user_data['msgid'] = update.message.reply_text(text='Please enter rank & name:').message_id
+    context.user_data['msgid'] = update.message.reply_text(text='Please enter your name:').message_id
     return RNAME
 
 def regHandler(update: Update, context: CallbackContext) -> int:
@@ -220,9 +220,7 @@ def approve(update: Update, context: CallbackContext) -> int:
         bot.send_message(
             chat_id=update.effective_chat.id,
             text=f'Invalid response! Please try again.')
-        return ConversationHandler.END
-   
-    
+        return ConversationHandler.END 
 
 def approveHandler(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
@@ -472,6 +470,8 @@ def bookHandler(update: Update, context: CallbackContext) -> int:
         text=f'Processing booking for {bd_str} {booking_time}... please wait'
     )
     start_dt = booking_date+timedelta(hours=float(start_time[:2]), minutes=float(start_time[-2:]))
+    logger.info(booking_date.isoformat())
+    logger.info(start_dt.isoformat())
     end_dt = booking_date+timedelta(hours=float(end_time[:2]), minutes=float(end_time[-2:]))
     cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
     event_list = []
