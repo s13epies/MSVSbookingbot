@@ -384,7 +384,9 @@ def date(update: Update, context: CallbackContext) -> int:
 def time(update: Update, context: CallbackContext) -> int:
     service = get_calendar_service()
     booking_date = update.message.text 
-    bd = dateparser.parse(booking_date, settings={'DATE_ORDER': 'DMY'}).astimezone(tz)
+    bd = dateparser.parse(booking_date, settings={'DATE_ORDER': 'DMY'}).date()
+    bd = datetime.combine(bd, datetime.min.time())
+    logger.info(f'BD={bd}')
     bot = context.bot
     if(bd is None or (bd.date()<(datetime.now().date()))):
         try:
@@ -398,7 +400,7 @@ def time(update: Update, context: CallbackContext) -> int:
                 text=f'Incorrect format. Please enter a valid booking date.'
             )
         return DATE
-    context.user_data['booking_date']=bd.date().isoformat()
+    context.user_data['booking_date']=bd.isoformat()
     logger.info(f'booking for {booking_date}')
     
     booklist = f'Bookings for {booking_date}:\n'
@@ -406,8 +408,8 @@ def time(update: Update, context: CallbackContext) -> int:
     booking_facility = int(context.user_data['facility'])
     calendarId = cal_ids[booking_facility]
     event_list = []
-    daystart_dt = bd.astimezone(tz)
-    dayend_dt = (bd+timedelta(days=1)).astimezone(tz)
+    daystart_dt = bd
+    dayend_dt = (bd+timedelta(days=1))
     page_token = None
     while True:
         events = service.events().list(calendarId=calendarId, pageToken=page_token, timeMin=daystart_dt.isoformat(), timeMax = dayend_dt.isoformat()).execute()
@@ -424,8 +426,8 @@ def time(update: Update, context: CallbackContext) -> int:
     if not event_list:
         booklist+='None\n'
     for e in event_list:
-        start_t = dateparser.parse(e['start']['dateTime']).strftime('%H%M')
-        end_t = dateparser.parse(e['end']['dateTime']).strftime('%H%M')
+        start_t = dateparser.parse(e['start']['dateTime']).astimezone(tz).strftime('%H%M')
+        end_t = dateparser.parse(e['end']['dateTime']).astimezone(tz).strftime('%H%M')
         name = e['summary']
         booklist+=f'{name} [{start_t}-{end_t}]\n'
     
@@ -463,7 +465,6 @@ def bookHandler(update: Update, context: CallbackContext) -> int:
         return TIME
     logger.info(f'booking for {booking_time}')
     booking_date = datetime.fromisoformat(context.user_data['booking_date'])
-    booking_date = datetime.combine(booking_date, datetime.min.time()).astimezone(tz)
     bd_str = booking_date.strftime('%d/%m/%Y')
     booking_facility = int(context.user_data['facility'])
     bot.edit_message_text(
