@@ -115,52 +115,36 @@ def register(update: Update, context: CallbackContext) -> int:   # Registration 
         if(user.id in context.bot_data['users'].keys()): # duplicate user
             update.message.reply_text(text='User already registered!')
             return ConversationHandler.END
-    logger.info('Asking user for authentication type')
-    keyboard = [
-        [
-            InlineKeyboardButton(f'NRIC', callback_data=NRIC),
-            InlineKeyboardButton(f'Phone Number', callback_data=PHONE)
-        ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    msgid = update.message.reply_text(text=f'Please select user authentication type', reply_markup=reply_markup).message_id
+    logger.info('Asking user for NRIC')
+    msgid = update.message.reply_text(text=f'Please enter the last 4 characters of your NRIC',).message_id
     context.user_data['msgid'] = msgid
     return AUTHTYPE
 
 def auth(update: Update, context: CallbackContext) -> int:
-    query = update.callback_query
-    auth_type = int(query.data)  # select type of authentication
-    context.user_data['auth_type']=auth_type
-    logger.info(f'AUTH TYPE: {auth_type} {type(auth_type)}')
-    logger.info('Asking user for authentication')
-    auth_prompt = ''
-    if(auth_type==NRIC):
-        auth_prompt = 'NRIC'
-    elif(auth_type==PHONE):
-        auth_prompt = 'phone number'
-    query.answer()
-    bot = context.bot
-    bot.edit_message_text(
-        chat_id=update.effective_chat.id, message_id=context.user_data['msgid'], 
-        text=f'Please enter the last 4 digits of your {auth_prompt}'
+    nric = update.message.text
+    if(re.match('^[0-9]{3}[A-Z]$', nric) is None):
+        try:
+            update.message.reply_text(text='Invalid NRIC, please try again')
+        except:
+            update.effective_chat.send_message(text='Invalid NRIC, please try again')
+        return AUTHTYPE
+    context.user_data['NRIC']=nric
+    logger.info(f'NRIC: {nric}')
+    logger.info('Asking user for phone number')
+    update.message.reply_text(
+        text=f'Please enter the last 4 digits of your phone number'
     )
     return AUTH
 
 def rankname(update: Update, context: CallbackContext) -> int:
-    auth_key = update.message.text
-    auth_type = context.user_data['auth_type']
-    auth_prompt = ''
-    if(auth_type==NRIC):
-        auth_val = '^[0-9]{3}[A-Z]$'
-        auth_prompt = 'NRIC'
-    elif(auth_type==PHONE):
-        auth_val = '^[0-9]{4}$'
-        auth_prompt = 'phone number'
-    if(re.match(auth_val, auth_key) is None):
-        bot.edit_message_text(chat_id=update.effective_chat.id, message_id=context.user_data['msgid'], text=f'Invalid {auth_prompt}. Please try again.')
+    phone = update.message.text
+    if(re.match('^[0-9]{4}$', phone) is None):
+        try:
+            update.message.reply_text(text='Invalid phone number last 4 digits, please try again')
+        except:
+            update.effective_chat.send_message(text='Invalid phone number last 4 digits, please try again')
         return AUTH
-    bot = context.bot
-    context.user_data['auth_key']=auth_key
+    context.user_data['phone']=phone
     logger.info('Asking user for rank and name')
     context.user_data['msgid'] = update.message.reply_text(text='Please enter rank & name:').message_id
     return RNAME
@@ -169,18 +153,10 @@ def regHandler(update: Update, context: CallbackContext) -> int:
     bot = context.bot
     rankname = update.message.text
     userid = update.effective_user.id
-    auth_type = context.user_data['auth_type']
-    auth_key = context.user_data['auth_key']
-    if(re.match(rankname_validator, rankname) is None):
-        bot.edit_message_text(chat_id=update.effective_chat.id, message_id=context.user_data['msgid'], text=f'Invalid rank and name. Please try again.')
-        return RNAME
-    if(auth_type==NRIC):
-        autht = 'nric'
-        auth_prompt = 'NRIC'
-    elif(auth_type==PHONE):
-        autht = 'phone'
-        auth_prompt = 'phone'
-    if(auth_key in context.bot_data['approved'][autht]):
+    nric = context.user_data['nric']
+    phone = context.user_data['phone']
+    auth_key = [str(nric),str(phone)]
+    if(auth_key in context.bot_data['approved']):
         context.bot_data['users'][userid]={
             'rankname':rankname,
             'admin':False
@@ -191,13 +167,12 @@ def regHandler(update: Update, context: CallbackContext) -> int:
         logger.info('registration pending approval')
         bot.send_message(chat_id=update.effective_chat.id, text=f'You are now pending registration as {rankname}. Please ask an admin to approve you.') 
         context.bot_data['requests'][userid]={
-                    'auth_type':auth_type,
                     'auth_key':auth_key,
                     'rankname':rankname
                 }
         for user in context.bot_data['users'].keys():
             if(context.bot_data['users'][user]['admin']):
-                bot.send_message(chat_id=user, text=f'{rankname} has requested approval with {auth_prompt}:{auth_key}. Approve users with /approve.')   
+                bot.send_message(chat_id=user, text=f'{rankname} has requested approval with NRIC:{auth_key[0]} & phone{auth_key[1]}. Approve users with /approve.')   
     context.user_data.clear()
     return ConversationHandler.END
 
@@ -216,35 +191,24 @@ def approve(update: Update, context: CallbackContext) -> int:
     if(args is None):
         args = []
     if(len(args)==2):
-        if(args[0].casefold()=='Phone'.casefold()):
-            auth_type = PHONE
-            auth_key = args[1]
-        elif(args[0].casefold()=='NRIC'.casefold()):
-            auth_type = NRIC
-            auth_key = args[1]
+        auth_key = [args[0], args[1]]
+        if(re.match('^[0-9]{4}$',auth_key[1]) is not None and re.match('^[0-9]{3}[A-Z]$', auth_key[0]) is not None):
+            context.bot_data['approved'].append(auth_key)
+            bot.send_message(
+                    chat_id=update.effective_chat.id,
+                    text=f'Approved user {auth_key[0]}:{auth_key[1]}')
+            return ConversationHandler.END
         else:
             bot.send_message(
             chat_id=update.effective_chat.id,
             text=f'Invalid response! Please try again.')
             return ConversationHandler.END
-    elif(len(args)==1):
-        # assume NRIC registration
-        auth_type = NRIC
-        auth_key = args[0]
     elif(len(args)==0):
         keyboard = []
-    
         for uid, d in context.bot_data['requests'].items():
             rn = d['rankname']
-            auth_type = d['auth_type']
             auth_key = d['auth_key']
-            if(auth_type==NRIC):
-                autht = 'nric'
-                auth_prompt = 'NRIC'
-            elif(auth_type==PHONE):
-                autht = 'phone'
-                auth_prompt = 'phone'
-            keyboard.append([InlineKeyboardButton(f'{rn} ({auth_prompt}:{auth_key})', callback_data=str(uid))])
+            keyboard.append([InlineKeyboardButton(f'{rn} ({auth_key[0]}:{auth_key[1]})', callback_data=str(uid))])
         keyboard.append([InlineKeyboardButton(f'Cancel', callback_data=str('cancel'))])
         reply_markup = InlineKeyboardMarkup(keyboard)
         bot.send_message(
@@ -257,21 +221,8 @@ def approve(update: Update, context: CallbackContext) -> int:
             chat_id=update.effective_chat.id,
             text=f'Invalid response! Please try again.')
         return ConversationHandler.END
-    if(auth_type==NRIC):
-        autht = 'nric'
-        auth_val = '^[0-9]{3}[A-Z]$'
-        auth_prompt = 'NRIC'
-    elif(auth_type==PHONE):
-        autht = 'phone'
-        auth_val = '^[0-9]{4}$'
-        auth_prompt = 'phone'
-    if(re.match(auth_val, auth_key) is None):
-        bot.send_message(chat_id=update.effective_chat.id, text=f'Invalid {auth_prompt}. Please try again.')
-    context.bot_data['approved'][autht].append(auth_key)
-    bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=f'Approved user {auth_prompt}:{auth_key}')
-    return ConversationHandler.END
+   
+    
 
 def approveHandler(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
@@ -367,8 +318,8 @@ def setup(update: Update, context: CallbackContext) -> None:
     if(update.effective_user.id!=DEVELOPER_CHAT_ID):
         update.message.reply_text('user not authorized')
         return
-    context.bot_data['approved']={'nric':[],'phone':[]}
-    context.bot_data['approved']['phone'].append('2481')
+    context.bot_data['approved']=[]
+    context.bot_data['approved'].append(['414I','2481'])
     context.bot_data['users']={}
     context.bot_data['requests']={}
     
