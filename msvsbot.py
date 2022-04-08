@@ -275,12 +275,15 @@ def approve(update: Update, context: CallbackContext) -> int:
 
 def approveHandler(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
-    auth_user = int(query.data)
+    auth_user = query.data
     if(auth_user=='cancel'):
+        query.answer()
         bot.send_message(
             chat_id=update.effective_chat.id,
             text=f'Action cancelled.')
         return ConversationHandler.END
+    
+    auth_user = int(auth_user)
     auth_dict = context.bot_data['requests'].get(auth_user)
     auth_rankname = auth_dict['rankname']
     query.answer()
@@ -318,6 +321,7 @@ def promoteHandler(update: Update, context: CallbackContext) -> int:
     admin_user = query.data
     bot = context.bot
     if(admin_user=='cancel'):
+        query.answer()
         bot.send_message(
             chat_id=update.effective_chat.id,
             text=f'Action cancelled.')
