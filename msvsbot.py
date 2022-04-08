@@ -386,7 +386,7 @@ def time(update: Update, context: CallbackContext) -> int:
     booking_date = update.message.text 
     bd = dateparser.parse(booking_date, settings={'DATE_ORDER': 'DMY'})
     logger.info(f'BD0={bd}')
-    bd = datetime.combine(bd.date(), datetime.min.time()).astimezone(tz)
+    bd = datetime.combine(bd.date(), datetime.min.time(), tzinfo=tz)
     logger.info(f'BD={bd}')
     bot = context.bot
     if(bd is None or (bd.date()<(datetime.now().date()))):
