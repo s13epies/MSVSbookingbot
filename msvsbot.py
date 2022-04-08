@@ -775,7 +775,7 @@ def main() -> None:
         entry_points=[CommandHandler('register', register)],
         states={
             AUTHTYPE: [
-                CallbackQueryHandler(auth)
+                MessageHandler(Filters.text & ~Filters.command, auth)
             ],
             AUTH: [
                 MessageHandler(Filters.text & ~Filters.command, rankname)
