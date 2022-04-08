@@ -172,7 +172,7 @@ def regHandler(update: Update, context: CallbackContext) -> int:
                 }
         for user in context.bot_data['users'].keys():
             if(context.bot_data['users'][user]['admin']):
-                bot.send_message(chat_id=user, text=f'{rankname} has requested approval with NRIC:{auth_key[0]} & phone{auth_key[1]}. Approve users with /approve.')   
+                bot.send_message(chat_id=user, text=f'{rankname} has requested approval with NRIC:{auth_key[0]} & phone:{auth_key[1]}. Approve users with /approve.')   
     context.user_data.clear()
     return ConversationHandler.END
 
@@ -227,9 +227,9 @@ def approve(update: Update, context: CallbackContext) -> int:
 def approveHandler(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     auth_user = query.data
+    query.answer()
     bot = context.bot
     if(auth_user=='cancel'):
-        query.answer()
         bot.send_message(
             chat_id=update.effective_chat.id,
             text=f'Action cancelled.')
@@ -238,7 +238,11 @@ def approveHandler(update: Update, context: CallbackContext) -> int:
     auth_user = int(auth_user)
     auth_dict = context.bot_data['requests'].get(auth_user)
     auth_rankname = auth_dict['rankname']
-    query.answer()
+    context.bot_data['approved'].append(context.bot_data['requests'][auth_user]['auth_key'])
+    context.bot_data['users'][auth_user]={
+            'rankname':auth_rankname,
+            'admin':False
+        }
     bot.send_message(
             chat_id=update.effective_chat.id,
             text=f'Approved user {auth_rankname}')
