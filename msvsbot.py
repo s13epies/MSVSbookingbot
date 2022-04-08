@@ -398,7 +398,7 @@ def time(update: Update, context: CallbackContext) -> int:
                 text=f'Incorrect format. Please enter a valid booking date.'
             )
         return DATE
-    context.user_data['booking_date']=bd.strftime('%d/%m/%Y')
+    context.user_data['booking_date']=bd.isoformat()
     logger.info(f'booking for {booking_date}')
     
     booklist = f'Bookings for {booking_date}:\n'
@@ -462,7 +462,7 @@ def bookHandler(update: Update, context: CallbackContext) -> int:
             pass
         return TIME
     logger.info(f'booking for {booking_time}')
-    booking_date = datetime.strptime(context.user_data['booking_date'],'%d/%m/%Y').astimezone(tz)
+    booking_date = datetime.fromisoformat(context.user_data['booking_date']).astimezone(tz)
     bd_str = booking_date.strftime('%d/%m/%Y')
     booking_facility = int(context.user_data['facility'])
     bot.edit_message_text(
