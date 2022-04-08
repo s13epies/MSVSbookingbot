@@ -424,8 +424,8 @@ def time(update: Update, context: CallbackContext) -> int:
     if not event_list:
         booklist+='None\n'
     for e in event_list:
-        start_t = dateparser.parse(e['start']['dateTime']).astimezone(tz).strftime('%H%M')
-        end_t = dateparser.parse(e['end']['dateTime']).astimezone(tz).strftime('%H%M')
+        start_t = dateparser.parse(e['start']['dateTime']).strftime('%H%M')
+        end_t = dateparser.parse(e['end']['dateTime']).strftime('%H%M')
         name = e['summary']
         booklist+=f'{name} [{start_t}-{end_t}]\n'
     
