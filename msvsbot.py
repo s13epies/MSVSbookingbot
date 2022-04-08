@@ -386,7 +386,7 @@ def time(update: Update, context: CallbackContext) -> int:
     booking_date = update.message.text 
     bd = dateparser.parse(booking_date, settings={'DATE_ORDER': 'DMY'})
     bot = context.bot
-    if(bd.date() is None or (bd<(datetime.now().date()))):
+    if(bd is None or (bd.date()<(datetime.now().date()))):
         try:
             bot.edit_message_text(
                 chat_id=update.effective_chat.id, message_id=context.user_data['msgid'], 
