@@ -385,8 +385,9 @@ def time(update: Update, context: CallbackContext) -> int:
     service = get_calendar_service()
     booking_date = update.message.text 
     bd = dateparser.parse(booking_date, settings={'DATE_ORDER': 'DMY'})
+    bd = bd.date()
     bot = context.bot
-    if(bd is None or (bd.date()<(datetime.now().date()))):
+    if(bd is None or (bd<(datetime.now().date()))):
         try:
             bot.edit_message_text(
                 chat_id=update.effective_chat.id, message_id=context.user_data['msgid'], 
@@ -398,7 +399,7 @@ def time(update: Update, context: CallbackContext) -> int:
                 text=f'Incorrect format. Please enter a valid booking date.'
             )
         return DATE
-    context.user_data['booking_date']=bd.astimezone(tz).isoformat()
+    context.user_data['booking_date']=bd.isoformat()
     logger.info(f'booking for {booking_date}')
     
     booklist = f'Bookings for {booking_date}:\n'
@@ -462,7 +463,7 @@ def bookHandler(update: Update, context: CallbackContext) -> int:
             pass
         return TIME
     logger.info(f'booking for {booking_time}')
-    booking_date = datetime.fromisoformat(context.user_data['booking_date'])
+    booking_date = datetime.fromisoformat(context.user_data['booking_date']).astimezone(tz)
     bd_str = booking_date.strftime('%d/%m/%Y')
     booking_facility = int(context.user_data['facility'])
     bot.edit_message_text(
@@ -530,8 +531,6 @@ def bookingDelete(update: Update, context: CallbackContext) -> int:
     service = get_calendar_service()
     bd = dateparser.parse(booking_date, settings={'DATE_ORDER': 'DMY'})
     bot = context.bot
-    print(bd)
-    print(datetime.today())
     if(bd is None or (bd.date()<(datetime.now().date()))):
         try:
             bot.edit_message_text(
