@@ -384,7 +384,7 @@ def date(update: Update, context: CallbackContext) -> int:
 def time(update: Update, context: CallbackContext) -> int:
     service = get_calendar_service()
     booking_date = update.message.text 
-    bd = dateparser.parse(booking_date, settings={'DATE_ORDER': 'DMY'})
+    bd = dateparser.parse(booking_date, settings={'DATE_ORDER': 'DMY'}).astimezone(tz)
     bot = context.bot
     if(bd is None or (bd.date()<(datetime.now().date()))):
         try:
