@@ -463,7 +463,8 @@ def bookHandler(update: Update, context: CallbackContext) -> int:
             pass
         return TIME
     logger.info(f'booking for {booking_time}')
-    booking_date = datetime.fromisoformat(context.user_data['booking_date']).astimezone(tz)
+    booking_date = datetime.fromisoformat(context.user_data['booking_date'])
+    booking_date = datetime.combine(booking_date, datetime.min.time()).astimezone(tz)
     bd_str = booking_date.strftime('%d/%m/%Y')
     booking_facility = int(context.user_data['facility'])
     bot.edit_message_text(
