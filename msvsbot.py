@@ -128,7 +128,7 @@ def auth(update: Update, context: CallbackContext) -> int:
         except:
             update.effective_chat.send_message(text='Invalid NRIC, please try again')
         return AUTHTYPE
-    context.user_data['NRIC']=nric
+    context.user_data['nric']=nric
     logger.info(f'NRIC: {nric}')
     logger.info('Asking user for phone number')
     update.message.reply_text(
