@@ -195,8 +195,8 @@ def regHandler(update: Update, context: CallbackContext) -> int:
                     'auth_key':auth_key,
                     'rankname':rankname
                 }
-        for user in context.chat_data['users'].keys():
-            if(context.chat_data['users'][user]['admin']):
+        for user in context.bot_data['users'].keys():
+            if(context.bot_data['users'][user]['admin']):
                 bot.send_message(chat_id=user, text=f'{rankname} has requested approval with {auth_prompt}:{auth_key}. Approve users with /approve.')   
     context.user_data.clear()
     return ConversationHandler.END
