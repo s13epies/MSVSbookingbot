@@ -88,13 +88,13 @@ def get_calendar_service():
     return service
 
 # CREATE CALENDAR
-def create_calendar(template: dict):
+'''def create_calendar(template: dict):
     try:
         response = service.calendars().insert(body=template).execute()
         return response
     except Exception as e:
         return e.__class__
-
+'''
 
 # ---TELEGRAM COMMAND HANDLERS---
 
@@ -805,7 +805,7 @@ def main() -> None:
     # Create the Updater and pass it your bot's token.
     init_testing_deploy()
     TOKEN = os.environ.get('TELE_BOT_TOKEN')
-    N = ''
+    N = 'msvs-bot'
     print(TOKEN)
     updater = Updater(TOKEN)
 
