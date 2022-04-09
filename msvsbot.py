@@ -56,7 +56,6 @@ PROMOTE = 1
 t_offset = timedelta(hours=8)  # for date offset from server time
 tz = timezone(timedelta(hours=8))
 # for error logging
-DEVELOPER_CHAT_ID = int(os.environ.get('DEVELOPER_CHAT_ID'))
 PORT = int(os.environ.get('PORT', 5000))
 regexstring = '^(ME[1-8][AT]?|REC|PTE|LCP|CPL|CFC|SCT|OCT|([1-3]|[MS])SG|([1-3]|[MSC])WO|2LT|LTA|CPT|MAJ|LTC|SLTC|COL|BG|MG|LG|GEN) [a-zA-Z][a-zA-Z ]+$'
 rankname_validator = re.compile(regexstring)
@@ -342,6 +341,7 @@ def softreset(update: Update, context: CallbackContext) -> None:
         print(created_rule['id'])'''
         
 def setupAdmin(update: Update, context: CallbackContext) -> None:
+    DEVELOPER_CHAT_ID = int(os.environ.get('DEVELOPER_CHAT_ID'))
     if(update.effective_user.id!=DEVELOPER_CHAT_ID):
         update.message.reply_text('user not authorized')
         return
@@ -654,6 +654,7 @@ def help_command(update: Update, context: CallbackContext) -> None:
                               f'Use /cancel to cancel actions.')
 
 def error_handler(update: object, context: CallbackContext) -> None:
+    DEVELOPER_CHAT_ID = int(os.environ.get('DEVELOPER_CHAT_ID'))
     """Log the error and send a telegram message to notify the developer."""
     # Log the error before we do anything else, so we can see it even if something breaks.
     logger.error(msg="Exception while handling an update:", exc_info=context.error)
@@ -696,6 +697,7 @@ def main() -> None:
     """Start the bot."""
     # Create the Updater and pass it your bot's token.
     init_testing_deploy()
+    
     TOKEN = os.environ.get('TELE_BOT_TOKEN')
     N = 'msvs-bot'
     DATABASE_URL = os.environ['DATABASE_URL']
