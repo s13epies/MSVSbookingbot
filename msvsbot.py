@@ -211,7 +211,7 @@ def approveHandler(update: Update, context: CallbackContext) -> int:
         return ConversationHandler.END
     
     auth_user = int(auth_user)
-    auth_dict = context.bot_data['requests'].get(auth_user)
+    auth_dict = context.bot_data['requests'].pop(auth_user)
     auth_rankname = auth_dict['rankname']
     context.bot_data['approved'].append(context.bot_data['requests'][auth_user]['auth_key'])
     context.bot_data['users'][auth_user]={
@@ -294,13 +294,34 @@ def deregister(update: Update, context: CallbackContext) -> None:
     return
     
 def setup(update: Update, context: CallbackContext) -> None:
-    if(update.effective_user.id!=DEVELOPER_CHAT_ID):
+    '''if(update.effective_user.id!=DEVELOPER_CHAT_ID):
         update.message.reply_text('user not authorized')
-        return
-    context.bot_data['approved']=[]
-    context.bot_data['approved'].append(['414I','2481'])
-    context.bot_data['users']={}
-    context.bot_data['requests']={}
+        return'''
+    if 'approved' not in context.bot_data:
+        context.bot_data['approved']=[]
+    DA = json.loads(os.environ.get('DEVELOPER_AUTH'))
+    if DA not in context.bot_data['approved']:
+        context.bot_data['approved'].append(DA)
+    if 'users' not in context.bot_data:
+        context.bot_data['users']={}
+    if 'requests' not in context.bot_data:
+        context.bot_data['requests']={}
+    update.message.reply_text('Bot initialization complete!')
+    
+def reset(update: Update, context: CallbackContext) -> None:
+    logger.info('reset bot')
+    context.chat_data.clear()
+    context.bot_data.clear()
+    context.user_data.clear()
+    bot = context.bot
+    bot.send_message(chat_id=update.message.chat_id, text='Bot reset. Please use /setup to resume')
+    
+def softreset(update: Update, context: CallbackContext) -> None:
+    logger.info('soft reset bot')
+    context.chat_data.clear()
+    context.user_data.clear()
+    bot = context.bot
+    bot.send_message(chat_id=update.message.chat_id, text='Soft reset performed.')
     
 ###HELPER FUNCTION DONT RUN
 '''def create_cals():
@@ -320,14 +341,12 @@ def setup(update: Update, context: CallbackContext) -> None:
         created_rule = service.acl().insert(calendarId=i['id'], body=rule).execute()
         print(created_rule['id'])'''
         
-
 def setupAdmin(update: Update, context: CallbackContext) -> None:
     if(update.effective_user.id!=DEVELOPER_CHAT_ID):
         update.message.reply_text('user not authorized')
         return
     context.bot_data['users'][DEVELOPER_CHAT_ID]['admin']=True
-    
-    
+      
 def book(update: Update, context: CallbackContext) -> int:   # Registration start point
     user = update.effective_user
     context.user_data.clear()
@@ -620,7 +639,14 @@ def view(update: Update, context: CallbackContext) -> int:
 
 def help_command(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /help is issued."""
-    update.message.reply_text(f'Use /register to register and /dereg to deregister. Use /book to book rooms and /delete to delete a booking. Admins may use /approve to approve new user registrations or /promote to promote a user to admin. use /cancel to cancel actions.')
+    update.message.reply_text(f'Use /register to register and /dereg to deregister. \n'
+                              f'Use /book to book rooms and /delete to delete a booking.\n' 
+                              f'Use /view to see room bookings\n' 
+                              f'Use /view_week to see availability of a room for this week\n' 
+                              f'Use /view_day to see availability of all rooms for a particular day\n' 
+                              f'Admins may use /approve to approve new user registrations or /promote to promote a user to admin.\n'
+                              f'use /approve [NRIC] [Phone] to pre-approve users\n'
+                              f'Use /cancel to cancel actions.')
 
 def error_handler(update: object, context: CallbackContext) -> None:
     """Log the error and send a telegram message to notify the developer."""
@@ -708,7 +734,7 @@ def main() -> None:
     )
     dispatcher.add_handler(approve_handler)
     
-    # Setup conversation for registration approval
+    # Setup conversation for user promotion
     promote_handler = ConversationHandler(
         entry_points=[CommandHandler('promote', promote)],
         states={
@@ -790,8 +816,11 @@ def main() -> None:
     dispatcher.add_handler(CommandHandler('start', start))
     dispatcher.add_handler(CommandHandler('setup', setup))
     dispatcher.add_handler(CommandHandler('setupadmin', setupAdmin))
-    dispatcher.add_handler(CommandHandler('help', help))
+    dispatcher.add_handler(CommandHandler('help', help_command))
     dispatcher.add_handler(CommandHandler('view', view))
+    dispatcher.add_handler(CommandHandler('reset', reset))
+    dispatcher.add_handler(CommandHandler('softreset', softreset))
+    dispatcher.add_handler(CommandHandler('cancel', cancelReg))
     # dispatcher.add_handler(CommandHandler('create_cals', create_cals))
     #Errors
     dispatcher.add_error_handler(error_handler)

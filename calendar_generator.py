@@ -261,6 +261,9 @@ def createImageAll():
     print('Schedule generated')
     return buf
 
+def generate_keys64():
+    print(base64.b64encode(json.dumps(json.load(open('keys.json','r'))).encode()))
+
 # TESTING FUNCTION, IGNORE
 def main() -> None:
     init_testing_local()
