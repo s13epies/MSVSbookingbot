@@ -163,7 +163,6 @@ def approve(update: Update, context: CallbackContext) -> int:
             text=f'You are not an admin! Please contact an admin.')
             return ConversationHandler.END
     args = context.args
-    print(args)
     if(args is None):
         args = []
     if(len(args)==2):
@@ -690,7 +689,6 @@ def init_testing_deploy():
     keys_64 = os.environ['keys']
     keys = base64.b64decode(keys_64).decode()
     data = json.loads(keys)
-    print(data.keys())
     for k in data.keys():
         dk = data[k]
         if(type(dk) is not str):

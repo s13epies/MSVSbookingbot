@@ -6,7 +6,9 @@ import os
 import io
 import json
 import dateparser
+import logging
 import base64
+# for plotting the schedules
 import matplotlib.patches as mpatches
 from matplotlib.patches import Rectangle
 import numpy as np
@@ -22,12 +24,12 @@ SCOPES = ['https://www.googleapis.com/auth/calendar.events', 'https://www.google
 
 tz = timezone(timedelta(hours=8))
 ROOMS = ['L1 Ops Hub', 'L1 Mercury\nPlanning Room', 'L2 Venus\nPlanning Room', 'L3 Terra\nPlanning Room', 'TRACKED VEHICLE\nMOVEMENT']
+logger = logging.getLogger(__name__)
 
 def get_event_list(calendarIds: list, start: datetime, end: datetime) -> list:
     service = get_calendar_service()
     event_list = []
     for i,calendarId in enumerate(calendarIds, start=1):
-        print(calendarId)
         page_token = None
         while True:
             events = service.events().list(
@@ -120,18 +122,13 @@ def createImageDay(day:datetime):
     plt.grid(axis='x', alpha=0.5, which='major', lw=1.2)
     plt.ylim(0, 5)
     plt.xlim(7.5, 18.5)
-    # remove borders and ticks
-    '''for spine in plt.gca().spines.values():
-        spine.set_visible(False)'''
-    # plt.tick_params(top=False, bottom=False, left=False, right=False)
-    # plt.show()
+
     plt.title(booking_date)
     for y in range(1,5):
         plt.axhline(y=y, color='k', lw=1) 
     buf = io.BytesIO()
     plt.savefig(buf, format='png', dpi=150, bbox_inches='tight')
     buf.seek(0)
-    print('Schedule generated')
     return buf
 
 def createImageWeek(facility:int):
@@ -143,10 +140,7 @@ def createImageWeek(facility:int):
     monday = datetime.combine(monday.date(), datetime.min.time(), tzinfo=tz)
     weekstart_dt = monday.astimezone(tz)
     weekend_dt = (monday+timedelta(days=6)).astimezone(tz)
-    print(weekstart_dt.isoformat())
-    print(weekend_dt.isoformat())
     event_list = get_event_list([cal_ids[facility]], weekstart_dt, weekend_dt)
-    print(event_list)
     plt.figure(figsize=(10, 4))
     # non days are grayed
     ax = plt.gca().axes
@@ -179,18 +173,13 @@ def createImageWeek(facility:int):
     plt.ylim(0, 5)
     plt.xlim(7.5, 18.5)
     plt.gca().invert_yaxis()
-    # remove borders and ticks
-    '''for spine in plt.gca().spines.values():
-        spine.set_visible(False)'''
-    # plt.tick_params(top=False, bottom=False, left=False, right=False)
-    # plt.show()
+    
     plt.title(ROOMS[facility].replace('\n',' '))
     for y in range(1,5):
         plt.axhline(y=y, color='k', lw=1) 
     buf = io.BytesIO()
     plt.savefig(buf, format='png', dpi=150, bbox_inches='tight')
     buf.seek(0)
-    print('Schedule generated')
     return buf
 
 def createImageAll(now=None):
@@ -203,10 +192,7 @@ def createImageAll(now=None):
     monday = datetime.combine(monday.date(), datetime.min.time(), tzinfo=tz)
     weekstart_dt = monday.astimezone(tz)
     weekend_dt = (monday+timedelta(days=6)).astimezone(tz)
-    print(weekstart_dt.isoformat())
-    print(weekend_dt.isoformat())
     event_list = get_event_list(cal_ids, weekstart_dt, weekend_dt)
-    print(event_list)
     plt.figure(figsize=(12, 7))
     # non days are grayed
     ax = plt.gca().axes
@@ -240,11 +226,7 @@ def createImageAll(now=None):
     plt.ylim(0, 5)
     plt.xlim(7.5, 18.5)
     plt.gca().invert_yaxis()
-    # remove borders and ticks
-    '''for spine in plt.gca().spines.values():
-        spine.set_visible(False)'''
-    # plt.tick_params(top=False, bottom=False, left=False, right=False)
-    # plt.show()    
+
     for y in range(1,5):
         plt.axhline(y=y, color='k', lw=1) 
     legend_handles = [mpatches.Patch(color=colors[i], label=ROOMS[i]) for i in range(len(ROOMS))]
@@ -259,18 +241,18 @@ def createImageAll(now=None):
     buf = io.BytesIO()
     plt.savefig(buf, format='png', dpi=150, bbox_inches='tight')
     buf.seek(0)
-    print('Schedule generated')
     return buf
 
 def generate_keys64():
-    print(base64.b64encode(json.dumps(json.load(open('keys.json','r'))).encode()))
+    return (base64.b64encode(json.dumps(json.load(open('keys.json','r'))).encode()))
 
 # TESTING FUNCTION, IGNORE
 def main() -> None:
-    init_testing_local()
+    '''init_testing_local()
     today = datetime.combine(datetime.now().date(), datetime.min.time(), tzinfo=tz)
     with open('out.png','wb') as outfile:
-        outfile.write(createImageAll().read())
+        outfile.write(createImageAll().read())'''
+    logger.info(generate_keys64())
     return
 
 if __name__ == '__main__':
