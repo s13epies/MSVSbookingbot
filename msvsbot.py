@@ -638,7 +638,12 @@ def view(update: Update, context: CallbackContext) -> int:
         if(user.id not in context.bot_data['users']): # user not registered
             update.message.reply_text(text='User not registered! Use /register to register')
             return
-    img = createImageAll()
+    args = context.args
+    now = None
+    if(args is not None):
+        argstr = ' '.join(args)
+        now = dateparser.parse(argstr)
+    img = createImageAll(now)
     logger.info(f'generating overview image')
     bot.send_photo(chat_id=update.effective_chat.id, photo=img)
 

@@ -193,11 +193,12 @@ def createImageWeek(facility:int):
     print('Schedule generated')
     return buf
 
-def createImageAll():
+def createImageAll(now=None):
     colors=['pink', 'lightgreen', 'lightblue', 'wheat', 'salmon']    
     weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday']
     cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
-    now = datetime.now()
+    if now is None:
+        now = datetime.now()
     monday = now - timedelta(days = now.weekday())
     monday = datetime.combine(monday.date(), datetime.min.time(), tzinfo=tz)
     weekstart_dt = monday.astimezone(tz)
