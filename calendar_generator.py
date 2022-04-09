@@ -207,7 +207,7 @@ def createImageAll(now=None):
     print(weekend_dt.isoformat())
     event_list = get_event_list(cal_ids, weekstart_dt, weekend_dt)
     print(event_list)
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(12, 7))
     # non days are grayed
     ax = plt.gca().axes
         
