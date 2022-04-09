@@ -640,6 +640,7 @@ def error_handler(update: object, context: CallbackContext) -> None:
         '</pre>\n\n'
         f'<pre>context.chat_data = {html.escape(str(context.chat_data))}</pre>\n\n'
         f'<pre>context.user_data = {html.escape(str(context.user_data))}</pre>\n\n'
+        f'<pre>context.bot_data = {html.escape(str(context.bot_data))}</pre>\n\n'
         f'<pre>{html.escape(tb_string)}</pre>'
     )
     context.user_data.clear()
