@@ -154,7 +154,10 @@ def regHandler(update: Update, context: CallbackContext) -> int:
 
 def approve(update: Update, context: CallbackContext) -> int:
     userid = update.effective_user.id
-
+    if('users' in context.bot_data):
+        if(userid not in context.bot_data['users']): # user not registered
+            update.message.reply_text(text='User not registered! Use /register to register')
+            return ConversationHandler.END
     bot = context.bot
     if(context.bot_data['users'][userid] is not None):
         if not context.bot_data['users'][userid]['admin']:
@@ -224,6 +227,10 @@ def approveHandler(update: Update, context: CallbackContext) -> int:
 def promote(update: Update, context: CallbackContext) -> int:
     bot = context.bot
     userid = update.effective_user.id
+    if('users' in context.bot_data):
+        if(userid not in context.bot_data['users']): # user not registered
+            update.message.reply_text(text='User not registered! Use /register to register')
+            return ConversationHandler.END
     if(context.bot_data['users'][userid] is not None):
         if not context.bot_data['users'][userid]['admin']:
             bot.send_message(
@@ -348,11 +355,11 @@ def setupAdmin(update: Update, context: CallbackContext) -> None:
       
 def book(update: Update, context: CallbackContext) -> int:   # Registration start point
     user = update.effective_user
-    context.user_data.clear()
     if('users' in context.bot_data):
         if(user.id not in context.bot_data['users']): # user not registered
             update.message.reply_text(text='User not registered! Use /register to register')
             return ConversationHandler.END
+    context.user_data.clear()
     logger.info('Asking user for facility')
     keyboard = [
         [InlineKeyboardButton(f'{room}', callback_data=i)] for i, room in enumerate(ROOMS)
