@@ -1,4 +1,5 @@
-from tkinter import CENTER
+import matplotlib
+matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta, timezone
 import os
@@ -9,7 +10,6 @@ import base64
 import matplotlib.patches as mpatches
 from matplotlib.patches import Rectangle
 import numpy as np
-
 # stuff for google calendar api
 from os import path
 from google.auth.transport.requests import Request
