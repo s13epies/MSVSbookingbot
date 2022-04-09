@@ -610,6 +610,7 @@ def viewWeekHandler(update: Update, context: CallbackContext) -> int:
     img = createImageWeek(room)
     logger.info(f'generating image for {ROOMS[room]}')
     bot.send_photo(chat_id=update.effective_chat.id, photo=img)
+    return ConversationHandler.END
     
 def view(update: Update, context: CallbackContext) -> int:
     bot = context.bot
