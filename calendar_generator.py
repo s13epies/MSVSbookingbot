@@ -107,7 +107,7 @@ def createImageDay(day:datetime):
         # plot event
         ax.add_patch(Rectangle((end, room), width=(start-end), height=1, color=colors[room], alpha=1, ec='k',lw=0.7))
         #plot name of booking
-        plt.text((start+end)/2, room+0.5, f'''{event}''', va='center', ha='center', fontsize=6)
+        plt.text((start+end)/2, room+0.5, f'''{event}''', va='center', ha='center', fontsize=5)
         # plot beginning time
         plt.text(start+0.02, room+0.95, f'''{start_t.strftime('%H:%M')}''', va='top', fontsize=4)
         #plot end time
@@ -165,7 +165,7 @@ def createImageWeek(facility:int):
         # plot event
         ax.add_patch(Rectangle((end, day), width=(start-end), height=1, color=colors[day], alpha=1, ec='k',lw=0.7))
         #plot name of booking
-        plt.text((start+end)/2, day+0.5, f'''{event}''', va='center', ha='center', fontsize=6)
+        plt.text((start+end)/2, day+0.5, f'''{event}''', va='center', ha='center', fontsize=5)
         # plot beginning time
         plt.text(start+0.02, day+0.05, f'''{start_t.strftime('%H:%M')}''', va='top', fontsize=4)
         #plot end time
