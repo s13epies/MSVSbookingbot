@@ -642,7 +642,7 @@ def view(update: Update, context: CallbackContext) -> int:
     now = None
     if(args is not None):
         argstr = ' '.join(args)
-        now = dateparser.parse(argstr)
+        now = dateparser.parse(argstr, settings={'DATE_ORDER': 'DMY'})
     img = createImageAll(now)
     logger.info(f'generating overview image')
     bot.send_photo(chat_id=update.effective_chat.id, photo=img)
