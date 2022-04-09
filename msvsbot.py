@@ -413,7 +413,14 @@ def time(update: Update, context: CallbackContext) -> int:
     dayend_dt = (bd+timedelta(days=1))
     page_token = None
     while True:
-        events = service.events().list(calendarId=calendarId, pageToken=page_token, timeMin=daystart_dt.isoformat(), timeMax = dayend_dt.isoformat(), orderBy='startTime').execute()
+        events = service.events().list(
+            calendarId=calendarId,
+            pageToken=page_token,
+            timeMin=daystart_dt.isoformat(),
+            timeMax = dayend_dt.isoformat(),
+            orderBy='startTime',
+            singleEvents=True,
+        ).execute()
         for event in events['items']:
             event_list.append({
                 'summary':event['summary'],
@@ -610,7 +617,7 @@ def deleteHandler(update: Update, context: CallbackContext) -> int:
     ).message_id
     return ConversationHandler.END
 
-def createImageDay(day:datetime):  
+def createImageDay(day:datetime):  # TODO WIP
     rooms=ROOMS
     colors=['pink', 'lightgreen', 'lightblue', 'wheat', 'salmon']    
     fig=plt.figure(figsize=(10,5.89))
