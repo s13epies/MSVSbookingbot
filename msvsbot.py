@@ -27,21 +27,16 @@ from postgrespersistence import PostgresPersistence
 import re
 import os
 import base64
-import matplotlib.pyplot as plt
-from PIL import Image
-import io
+from calendar_generator import createImageAll, createImageDay, createImageWeek, get_calendar_service, get_event_list
 # stuff for google calendar api
 from os import path
-import pickle
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from oauth2client.service_account import ServiceAccountCredentials
 from googleapiclient.discovery import build
 
-# IF YOU MODIFY THE SCOPE DELETE THE TOKEN.TXT FILE
+# PERMISSIONS FOR API ACCESS
 SCOPES = ['https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar']
-
-# THE TOKEN.TXT FILE STORES UPDATE AND USER ACCESS TOKENS
 
 # Enable logging
 logging.basicConfig(
@@ -61,31 +56,13 @@ PROMOTE = 1
 t_offset = timedelta(hours=8)  # for date offset from server time
 tz = timezone(timedelta(hours=8))
 # for error logging
-DEVELOPER_CHAT_ID = 291603849
+DEVELOPER_CHAT_ID = int(os.environ.get('DEVELOPER_CHAT_ID'))
 PORT = int(os.environ.get('PORT', 5000))
 regexstring = '^(ME[1-8][AT]?|REC|PTE|LCP|CPL|CFC|SCT|OCT|([1-3]|[MS])SG|([1-3]|[MSC])WO|2LT|LTA|CPT|MAJ|LTC|SLTC|COL|BG|MG|LG|GEN) [a-zA-Z][a-zA-Z ]+$'
 rankname_validator = re.compile(regexstring)
 
 # GOOGLE CALENDAR API UTILITY FUNCTIONS
 # THIS ALLOWS US TO INTERACT WITH ALL GOOGLE APIS, IN THIS CASE CALENDAR
-
-def get_calendar_service():
-    creds = None
-    '''
-    if path.exists("token.txt"):
-        creds = pickle.load(open("token.txt", "rb"))
-    # IF IT EXPIRED, WE REFRESH THE CREDENTIALS
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            creds = get_crendetials_google()
-    '''
-    # key_file_location = 'msvskey.json'
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(os.environ["GOOGLE_APPLICATION_CREDENTIALS"]), scopes=SCOPES)
-    service = build("calendar", "v3", credentials=creds)
-
-    return service
 
 # CREATE CALENDAR
 '''def create_calendar(template: dict):
@@ -104,7 +81,7 @@ def start(update: Update, context: CallbackContext) -> None:
     chatid = update.message.chat_id
     bot.send_message(
         chat_id=chatid,
-        text=f'Send /register to register user, /deregister to deregister.'
+        text=f'Send /register to register user, /dereg to deregister.'
     )
 
 def register(update: Update, context: CallbackContext) -> int:   # Registration start point
@@ -352,7 +329,6 @@ def setupAdmin(update: Update, context: CallbackContext) -> None:
     
     
 def book(update: Update, context: CallbackContext) -> int:   # Registration start point
-    bot = context.bot
     user = update.effective_user
     context.user_data.clear()
     if('users' in context.bot_data):
@@ -382,12 +358,9 @@ def date(update: Update, context: CallbackContext) -> int:
     return DATE
 
 def time(update: Update, context: CallbackContext) -> int:
-    service = get_calendar_service()
     booking_date = update.message.text 
     bd = dateparser.parse(booking_date, settings={'DATE_ORDER': 'DMY'})
     logger.info(f'BD0={bd}')
-    bd = datetime.combine(bd.date(), datetime.min.time(), tzinfo=tz)
-    logger.info(f'BD={bd}')
     bot = context.bot
     if(bd is None or (bd.date()<(datetime.now().date()))):
         try:
@@ -401,6 +374,8 @@ def time(update: Update, context: CallbackContext) -> int:
                 text=f'Incorrect format. Please enter a valid booking date.'
             )
         return DATE
+    bd = datetime.combine(bd.date(), datetime.min.time(), tzinfo=tz)
+    logger.info(f'BD={bd}')
     context.user_data['booking_date']=bd.isoformat()
     logger.info(f'booking for {booking_date}')
     
@@ -408,29 +383,10 @@ def time(update: Update, context: CallbackContext) -> int:
     cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
     booking_facility = int(context.user_data['facility'])
     calendarId = cal_ids[booking_facility]
-    event_list = []
+    
     daystart_dt = bd
     dayend_dt = (bd+timedelta(days=1))
-    page_token = None
-    while True:
-        events = service.events().list(
-            calendarId=calendarId,
-            pageToken=page_token,
-            timeMin=daystart_dt.isoformat(),
-            timeMax = dayend_dt.isoformat(),
-            orderBy='startTime',
-            singleEvents=True,
-        ).execute()
-        for event in events['items']:
-            event_list.append({
-                'summary':event['summary'],
-                'start':event['start'],
-                'end':event['end'],
-                'id':event['id'],
-            })
-        page_token = events.get('nextPageToken')
-        if not page_token:
-            break
+    event_list = get_event_list([calendarId], daystart_dt, dayend_dt)
     if not event_list:
         booklist+='None\n'
     for e in event_list:
@@ -484,20 +440,14 @@ def bookHandler(update: Update, context: CallbackContext) -> int:
     logger.info(start_dt.isoformat())
     end_dt = booking_date+timedelta(hours=float(end_time[:2]), minutes=float(end_time[-2:]))
     cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
-    event_list = []
+    
     calendarId = cal_ids[booking_facility]
-    page_token = None
-    while True:
-        events = service.events().list(calendarId=calendarId, pageToken=page_token, timeMin=start_dt.isoformat(), timeMax = end_dt.isoformat()).execute()
-        for event in events['items']:
-            event_list.append(event['summary'])
-        page_token = events.get('nextPageToken')
-        if not page_token:
-            break
+    event_list = get_event_list([calendarId], start_dt, end_dt)
     if event_list:
+        booked = event_list[0]['summary']
         bot.edit_message_text(
             chat_id=update.effective_chat.id, message_id=context.user_data['msgid'], 
-            text=f'Cannot book {ROOMS[booking_facility]} on {bd_str} {booking_time}. Booking already made by {event_list[0]}. Use /cancel to cancel or enter your booking start and end time in 24 hour HHHH-HHHH format.'
+            text=f'Cannot book {ROOMS[booking_facility]} on {bd_str} {booking_time}. Booking already made by {booked}. Use /cancel to cancel or enter your booking start and end time in 24 hour HHHH-HHHH format.'
         )
         return TIME
     booking = {
@@ -519,7 +469,6 @@ def bookHandler(update: Update, context: CallbackContext) -> int:
     return ConversationHandler.END
     
 def delete(update: Update, context: CallbackContext) -> int:   # Registration start point
-    bot = context.bot
     user = update.effective_user
     context.user_data.clear()
     if('users' in context.bot_data):
@@ -537,7 +486,6 @@ def delete(update: Update, context: CallbackContext) -> int:   # Registration st
 
 def bookingDelete(update: Update, context: CallbackContext) -> int:
     booking_date = update.message.text 
-    service = get_calendar_service()
     bd = dateparser.parse(booking_date, settings={'DATE_ORDER': 'DMY'})
     bot = context.bot
     if(bd is None or (bd.date()<(datetime.now().date()))):
@@ -556,22 +504,10 @@ def bookingDelete(update: Update, context: CallbackContext) -> int:
     cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
     booking_facility = int(context.user_data['facility'])
     calendarId = cal_ids[booking_facility]
-    event_list = []
+    
     daystart_dt = bd.astimezone(tz)
     dayend_dt = (bd+timedelta(days=1)).astimezone(tz)
-    page_token = None
-    while True:
-        events = service.events().list(calendarId=calendarId, pageToken=page_token, timeMin=daystart_dt.isoformat(), timeMax = dayend_dt.isoformat()).execute()
-        for event in events['items']:
-            event_list.append({
-                'summary':event['summary'],
-                'start':event['start'],
-                'end':event['end'],
-                'id':event['id'],
-            })
-        page_token = events.get('nextPageToken')
-        if not page_token:
-            break
+    event_list = get_event_list([calendarId], daystart_dt, dayend_dt)
     keyboard = []
     valid = False
     for e in event_list:
@@ -617,76 +553,7 @@ def deleteHandler(update: Update, context: CallbackContext) -> int:
     ).message_id
     return ConversationHandler.END
 
-def createImageDay(day:datetime):  # TODO WIP
-    rooms=ROOMS
-    colors=['pink', 'lightgreen', 'lightblue', 'wheat', 'salmon']    
-    fig=plt.figure(figsize=(10,5.89))
-    booking_date = day.strftime('%d/%m/%Y')
-    service = get_calendar_service()
-    booklist = f'Bookings for {booking_date}:\n'
-    cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
-    event_list = []
-    daystart_dt = day.astimezone(tz)
-    dayend_dt = (day+timedelta(days=1)).astimezone(tz)
-    for i, calendarId in enumerate(cal_ids):
-        page_token = None
-        while True:
-            events = service.events().list(calendarId=calendarId, pageToken=page_token, timeMin=daystart_dt.isoformat(), timeMax = dayend_dt.isoformat()).execute()
-            for event in events['items']:
-                event_list.append({
-                    'summary':event['summary'],
-                    'start':event['start'],
-                    'end':event['end'],
-                    'room':i+1,
-                })
-            page_token = events.get('nextPageToken')
-            if not page_token:
-                break
-    
-    for e in event_list:
-        event=e['summary']
-        # data=map(float, data[:-1])
-        room=e['room']-0.48
-        start_t = dateparser.parse(e['start']['dateTime']).astimezone(tz)
-        end_t = dateparser.parse(e['end']['dateTime']).astimezone(tz)
-        name = e['summary']
-        booklist+=f'{name} [{start_t}-{end_t}]\n'
-        start=start_t.hour+start_t.minute/60
-        end=end_t.hour+end_t.minute/60
-        # plot event
-        plt.fill_between([room, room+0.96], [start, start], [end,end], color=colors[int(e['room']-1)], edgecolor='k', linewidth=0.5)
-        # plot beginning time
-        plt.text(room+0.02, start+0.05 ,'{0}:{1:0>2}'.format(int(start_t.hour),int(start_t.minute)), va='top', fontsize=7)
-        # plot end time
-        # plt.text(room+0.02, start+0.05 ,'{0}:{1:0>2}'.format(int(end_t.hour),int(end_t.minute)), va='bottom', fontsize=7)
-        # plot event name
-        plt.text(room+0.48, (start+end)*0.5, event, ha='center', va='center', fontsize=11)
-
-    # Set Axis
-    ax=fig.add_subplot(111)
-    ax.yaxis.grid()
-    ax.set_xlim(0.5,len(rooms)+0.5)
-    ax.set_ylim(15.1, 8.9)
-    ax.set_xticks(range(1,len(rooms)+1))
-    ax.set_xticklabels(rooms)
-    ax.set_ylabel('Time')
-
-    # Set Second Axis
-    ax2=ax.twiny().twinx()
-    ax2.set_xlim(ax.get_xlim())
-    ax2.set_ylim(ax.get_ylim())
-    ax2.set_xticks(ax.get_xticks())
-    ax2.set_xticklabels(rooms)
-    ax2.set_ylabel('Time')
-
-    plt.title(booking_date,y=1.07)
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    return buf
-
 def viewDay(update: Update, context: CallbackContext) -> int:   # view start point
-    bot = context.bot
     user = update.effective_user
     if('users' in context.bot_data):
         if(user.id not in context.bot_data['users']): # user not registered
@@ -700,6 +567,7 @@ def viewDay(update: Update, context: CallbackContext) -> int:   # view start poi
 def viewDayHandler(update: Update, context: CallbackContext) -> int:
     booking_date = update.message.text 
     bd = dateparser.parse(booking_date, settings={'DATE_ORDER': 'DMY'})
+    bd = datetime.combine(bd.date(), datetime.min.time(), tzinfo=tz)
     bot = context.bot
     if(bd is None or (bd.date()<(datetime.now().date()))):
         try:
@@ -718,9 +586,40 @@ def viewDayHandler(update: Update, context: CallbackContext) -> int:
     bot.send_photo(chat_id=update.effective_chat.id, photo=img)
     return ConversationHandler.END
 
+def viewWeek(update: Update, context: CallbackContext) -> int:   # Registration start point
+    user = update.effective_user
+    context.user_data.clear()
+    if('users' in context.bot_data):
+        if(user.id not in context.bot_data['users']): # user not registered
+            update.message.reply_text(text='User not registered! Use /register to register')
+            return ConversationHandler.END
+    logger.info('Asking user for facility')
+    keyboard = [
+        [InlineKeyboardButton(f'{room}', callback_data=i)] for i, room in enumerate(ROOMS)
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    msgid = update.message.reply_text(text=f'Please select the facility you would like to view bookings for', reply_markup=reply_markup).message_id
+    context.user_data['msgid'] = msgid
+    return ROOM
+
+def viewWeekHandler(update: Update, context: CallbackContext) -> int:
+    query = update.callback_query
+    room = int(query.data)
+    query.answer()
+    bot = context.bot
+    img = createImageWeek(room)
+    logger.info(f'generating image for {ROOMS[room]}')
+    bot.send_photo(chat_id=update.effective_chat.id, photo=img)
+    
+def view(update: Update, context: CallbackContext) -> int:
+    bot = context.bot
+    img = createImageAll()
+    logger.info(f'generating overview image')
+    bot.send_photo(chat_id=update.effective_chat.id, photo=img)
+
 def help_command(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /help is issued."""
-    update.message.reply_text('Help!')
+    update.message.reply_text(f'Use /register to register and /dereg to deregister. Use /book to book rooms and /delete to delete a booking. Admins may use /approve to approve new user registrations or /promote to promote a user to admin. use /cancel to cancel actions.')
 
 def error_handler(update: object, context: CallbackContext) -> None:
     """Log the error and send a telegram message to notify the developer."""
@@ -746,14 +645,7 @@ def error_handler(update: object, context: CallbackContext) -> None:
     context.user_data.clear()
     # Finally, send the message
     context.bot.send_message(chat_id=DEVELOPER_CHAT_ID, text=message, parse_mode=ParseMode.HTML)
-
-def init_testing_local():
-    with open('keys.json','r') as keyfile:
-        data = json.load(keyfile)
-        print(json.dumps(data))
-        for k in data.keys():
-            os.environ[k]=data[k]
-    return
+    context.bot.send_message(chat_id=update.effective_chat.id, text='An error has occurred. Please use /cancel to cancel this action.')
 
 def init_testing_deploy():
     keys_64 = os.environ['keys']
@@ -865,9 +757,9 @@ def main() -> None:
     )
     dispatcher.add_handler(booking_handler)
     
-    # Setup conversation for viewing image
+    # Setup conversation for viewing image for a set day
     view_day_handler = ConversationHandler(
-        entry_points=[CommandHandler('viewday', viewDay)],
+        entry_points=[CommandHandler('view_day', viewDay)],
         states={
             DATE: [
                 MessageHandler(Filters.text & ~Filters.command, viewDayHandler)
@@ -877,13 +769,27 @@ def main() -> None:
         fallbacks=[CommandHandler('cancel', cancelReg)],
     )
     dispatcher.add_handler(view_day_handler)
+    
+    # Setup conversation for viewing image for a set facility
+    view_week_handler = ConversationHandler(
+        entry_points=[CommandHandler('view_week', viewWeek)],
+        states={
+            ROOM: [
+                CallbackQueryHandler(viewWeekHandler)
+            ],
+        },
+        
+        fallbacks=[CommandHandler('cancel', cancelReg)],
+    )
+    dispatcher.add_handler(view_week_handler)
+    
     # normal commands
     dispatcher.add_handler(CommandHandler('dereg', deregister))
     dispatcher.add_handler(CommandHandler('start', start))
     dispatcher.add_handler(CommandHandler('setup', setup))
-    
     dispatcher.add_handler(CommandHandler('setupadmin', setupAdmin))
     dispatcher.add_handler(CommandHandler('help', help))
+    dispatcher.add_handler(CommandHandler('view', view))
     # dispatcher.add_handler(CommandHandler('create_cals', create_cals))
     #Errors
     dispatcher.add_error_handler(error_handler)
@@ -903,5 +809,3 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
-
-
