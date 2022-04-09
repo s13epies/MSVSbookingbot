@@ -633,6 +633,11 @@ def viewWeekHandler(update: Update, context: CallbackContext) -> int:
     
 def view(update: Update, context: CallbackContext) -> int:
     bot = context.bot
+    user = update.effective_user
+    if('users' in context.bot_data):
+        if(user.id not in context.bot_data['users']): # user not registered
+            update.message.reply_text(text='User not registered! Use /register to register')
+            return
     img = createImageAll()
     logger.info(f'generating overview image')
     bot.send_photo(chat_id=update.effective_chat.id, photo=img)
