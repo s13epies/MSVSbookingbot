@@ -141,7 +141,7 @@ def regHandler(update: Update, context: CallbackContext) -> int:
                 }
         for user in context.bot_data['users'].keys():
             if(context.bot_data['users'][user]['admin']):
-                bot.send_message(chat_id=user, text=f'{rankname} has requested approval with NRIC:{auth_key[0]} & phone:{auth_key[1]}. Approve users with /approve.')   
+                bot.send_message(chat_id=int(user), text=f'{rankname} has requested approval with NRIC:{auth_key[0]} & phone:{auth_key[1]}. Approve users with /approve.')   
     context.user_data.clear()
     return ConversationHandler.END
 
@@ -310,7 +310,7 @@ def setup(update: Update, context: CallbackContext) -> None:
         for j in context.job_queue.get_jobs_by_name(context.bot_data['daily_job']):
             j.schedule_removal()
     logger.info('Creating daily reminder')
-    job = context.job_queue.run_daily(reminder, days=(0, 1, 2, 3, 4), context=context,time = time(hour = 16, minute = 8, second = 00, tzinfo=tz1))
+    job = context.job_queue.run_daily(reminder, days=(0, 1, 2, 3, 4), context=context,time = time(hour = 16, minute = 15, second = 00, tzinfo=tz1))
     logger.info(f'next job execution at {job.next_t.isoformat()}')
     context.bot_data['daily_job'] = job.name
     update.message.reply_text('Bot initialization complete!')
@@ -717,7 +717,7 @@ def error_handler(update: object, context: CallbackContext) -> None:
     )
     context.user_data.clear()
     # Finally, send the message
-    context.bot.send_message(chat_id=DEVELOPER_CHAT_ID, text=message, parse_mode=ParseMode.HTML)
+    context.bot.send_message(chat_id=int(DEVELOPER_CHAT_ID), text=message, parse_mode=ParseMode.HTML)
     context.bot.send_message(chat_id=update.effective_chat.id, text='An error has occurred. Please use /cancel to cancel this action.')
 
 def init_testing_deploy():
