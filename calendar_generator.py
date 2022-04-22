@@ -139,7 +139,7 @@ def createImageWeek(facility:int):
     monday = now - timedelta(days = now.weekday())
     monday = datetime.combine(monday.date(), datetime.min.time(), tzinfo=tz)
     weekstart_dt = monday.astimezone(tz)
-    weekend_dt = (monday+timedelta(days=6)).astimezone(tz)
+    weekend_dt = (monday+timedelta(days=5)).astimezone(tz)
     event_list = get_event_list([cal_ids[facility]], weekstart_dt, weekend_dt)
     plt.figure(figsize=(10, 4))
     # non days are grayed
@@ -191,7 +191,7 @@ def createImageAll(now=None):
     monday = now - timedelta(days = now.weekday())
     monday = datetime.combine(monday.date(), datetime.min.time(), tzinfo=tz)
     weekstart_dt = monday.astimezone(tz)
-    weekend_dt = (monday+timedelta(days=6)).astimezone(tz)
+    weekend_dt = (monday+timedelta(days=5)).astimezone(tz)
     event_list = get_event_list(cal_ids, weekstart_dt, weekend_dt)
     plt.figure(figsize=(12, 7))
     # non days are grayed
