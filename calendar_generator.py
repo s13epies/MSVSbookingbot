@@ -151,7 +151,7 @@ def createImageWeek(facility:int):
         event=e['summary']
         start_t = dateparser.parse(e['start']['dateTime']).astimezone(tz)
         end_t = dateparser.parse(e['end']['dateTime']).astimezone(tz)
-        day = start_t.date().weekday()-1
+        day = start_t.date().weekday()
         start=start_t.hour+start_t.minute/60
         end=end_t.hour+end_t.minute/60
         if(end<7 or start>18):
@@ -204,7 +204,7 @@ def createImageAll(now=None):
         room=e['room']-1
         start_t = dateparser.parse(e['start']['dateTime']).astimezone(tz)
         end_t = dateparser.parse(e['end']['dateTime']).astimezone(tz)
-        day = start_t.date().weekday()-1
+        day = start_t.date().weekday()
         start=start_t.hour+start_t.minute/60
         end=end_t.hour+end_t.minute/60
         if(end<7 or start>18):

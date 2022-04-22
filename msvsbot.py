@@ -147,7 +147,7 @@ def approve(update: Update, context: CallbackContext) -> int:
     userid = update.effective_user.id
     if('users' in context.bot_data):
         if(userid not in context.bot_data['users']): # user not registered
-            update.message.reply_text(text='User not registered! Use /register to register')
+            update.message.reply_text(text='User not registered! Use /start to register')
             return ConversationHandler.END
     bot = context.bot
     if(context.bot_data['users'][userid] is not None):
@@ -220,7 +220,7 @@ def promote(update: Update, context: CallbackContext) -> int:
     userid = update.effective_user.id
     if('users' in context.bot_data):
         if(userid not in context.bot_data['users']): # user not registered
-            update.message.reply_text(text='User not registered! Use /register to register')
+            update.message.reply_text(text='User not registered! Use /start to register')
             return ConversationHandler.END
     if(context.bot_data['users'][userid] is not None):
         if not context.bot_data['users'][userid]['admin']:
@@ -352,7 +352,7 @@ def book(update: Update, context: CallbackContext) -> int:   # Registration star
     user = update.effective_user
     if('users' in context.bot_data):
         if(user.id not in context.bot_data['users']): # user not registered
-            update.message.reply_text(text='User not registered! Use /register to register')
+            update.message.reply_text(text='User not registered! Use /start to register')
             return ConversationHandler.END
     context.user_data.clear()
     logger.info('Asking user for facility')
@@ -416,7 +416,7 @@ def time(update: Update, context: CallbackContext) -> int:
         booklist+=f'{name} [{start_t}-{end_t}]\n'
     context.user_data['msgid']=bot.send_message(
         chat_id=update.effective_chat.id, 
-        text=f'{booklist}Please enter your booking start in 24 hour HHHH format.'
+        text=f'{booklist}Please enter your booking start time in 24 hour HHHH format.'
     ).message_id
     return TIME
 
@@ -512,7 +512,7 @@ def delete(update: Update, context: CallbackContext) -> int:   # Registration st
     context.user_data.clear()
     if('users' in context.bot_data):
         if(user.id not in context.bot_data['users']): # user not registered
-            update.message.reply_text(text='User not registered! Use /register to register')
+            update.message.reply_text(text='User not registered! Use /start to register')
             return ConversationHandler.END
     logger.info('Asking user for facility')
     keyboard = [
@@ -596,7 +596,7 @@ def viewDay(update: Update, context: CallbackContext) -> int:   # view start poi
     user = update.effective_user
     if('users' in context.bot_data):
         if(user.id not in context.bot_data['users']): # user not registered
-            update.message.reply_text(text='User not registered! Use /register to register')
+            update.message.reply_text(text='User not registered! Use /start to register')
             return ConversationHandler.END
     logger.info('Asking user for date for viewing')
     msgid = update.message.reply_text(text=f'Please enter the date for viewing').message_id
@@ -630,7 +630,7 @@ def viewWeek(update: Update, context: CallbackContext) -> int:   # Registration 
     context.user_data.clear()
     if('users' in context.bot_data):
         if(user.id not in context.bot_data['users']): # user not registered
-            update.message.reply_text(text='User not registered! Use /register to register')
+            update.message.reply_text(text='User not registered! Use /start to register')
             return ConversationHandler.END
     logger.info('Asking user for facility')
     keyboard = [
@@ -656,7 +656,7 @@ def view(update: Update, context: CallbackContext) -> int:
     user = update.effective_user
     if('users' in context.bot_data):
         if(user.id not in context.bot_data['users']): # user not registered
-            update.message.reply_text(text='User not registered! Use /register to register')
+            update.message.reply_text(text='User not registered! Use /start to register')
             return
     args = context.args
     now = None
@@ -676,7 +676,7 @@ def reminder(update: Update, context: CallbackContext) -> int:
 
 def help_command(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /help is issued."""
-    update.message.reply_text(f'Use /register to register and /dereg to deregister. \n'
+    update.message.reply_text(f'Use /start to register and /dereg to deregister. \n'
                               f'Use /book to book rooms and /delete to delete a booking.\n' 
                               f'Use /view to see room bookings\n' 
                               f'Use /view_week to see availability of a room for this week\n' 
