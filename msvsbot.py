@@ -81,7 +81,7 @@ def register(update: Update, context: CallbackContext) -> int:   # Registration 
     user = update.effective_user
     context.user_data.clear()
     if('users' in context.bot_data):
-        if(user.id in context.bot_data['users'].keys()): # duplicate user
+        if(str(user.id) in context.bot_data['users'].keys()): # duplicate user
             update.message.reply_text(text='User already registered!')
             return ConversationHandler.END
     logger.info('Asking user for NRIC')
@@ -121,7 +121,7 @@ def rankname(update: Update, context: CallbackContext) -> int:
 def regHandler(update: Update, context: CallbackContext) -> int:
     bot = context.bot
     rankname = update.message.text
-    userid = update.effective_user.id
+    userid = str(update.effective_user.id)
     nric = context.user_data['nric']
     phone = context.user_data['phone']
     auth_key = [str(nric),str(phone)]
@@ -146,7 +146,7 @@ def regHandler(update: Update, context: CallbackContext) -> int:
     return ConversationHandler.END
 
 def approve(update: Update, context: CallbackContext) -> int:
-    userid = update.effective_user.id
+    userid = str(update.effective_user.id)
     if('users' in context.bot_data):
         if(userid not in context.bot_data['users']): # user not registered
             update.message.reply_text(text='User not registered! Use /start to begin registration')
@@ -219,7 +219,7 @@ def approveHandler(update: Update, context: CallbackContext) -> int:
 
 def promote(update: Update, context: CallbackContext) -> int:
     bot = context.bot
-    userid = update.effective_user.id
+    userid = str(update.effective_user.id)
     if('users' in context.bot_data):
         if(userid not in context.bot_data['users']): # user not registered
             update.message.reply_text(text='User not registered! Use /start to begin registration')
@@ -279,7 +279,7 @@ def cancelReg(update: Update, context: CallbackContext) -> int:
 def deregister(update: Update, context: CallbackContext) -> None:
     bot = context.bot
     user = update.effective_user
-    userid = user.id
+    userid = str(user.id)
     logger.info('Deregistering')
     if('users' not in context.bot_data):
         context.bot_data['users']={}
@@ -310,7 +310,7 @@ def setup(update: Update, context: CallbackContext) -> None:
         for j in context.job_queue.get_jobs_by_name(context.bot_data['daily_job']):
             j.schedule_removal()
     logger.info('Creating daily reminder')
-    job = context.job_queue.run_daily(reminder, context=context,days=(0, 1, 2, 3, 4),time = time(hour = 15, minute = 51, second = 00, tzinfo=tz1))
+    job = context.job_queue.run_daily(reminder, days=(0, 1, 2, 3, 4), context=context,time = time(hour = 16, minute = 5, second = 00, tzinfo=tz1))
     logger.info(f'next job execution at {job.next_t.isoformat()}')
     context.bot_data['daily_job'] = job.name
     update.message.reply_text('Bot initialization complete!')
@@ -358,7 +358,7 @@ def setupAdmin(update: Update, context: CallbackContext) -> None:
 def book(update: Update, context: CallbackContext) -> int:   # Registration start point
     user = update.effective_user
     if('users' in context.bot_data):
-        if(user.id not in context.bot_data['users']): # user not registered
+        if(str(user.id) not in context.bot_data['users']): # user not registered
             update.message.reply_text(text='User not registered! Use /start to begin registration')
             return ConversationHandler.END
     context.user_data.clear()
@@ -451,7 +451,7 @@ def bookHandler(update: Update, context: CallbackContext) -> int:
     service = get_calendar_service()
     end_time = update.message.text
     bot = context.bot
-    userid = update.effective_user.id
+    userid = str(update.effective_user.id)
     rankname = context.bot_data['users'][userid]['rankname']
     if(re.match('^([01]?[0-9]|2[0-3])[0-5][0-9]$',end_time) is None):   # input validation for input time format
         try:
@@ -518,7 +518,7 @@ def delete(update: Update, context: CallbackContext) -> int:   # Registration st
     user = update.effective_user
     context.user_data.clear()
     if('users' in context.bot_data):
-        if(user.id not in context.bot_data['users']): # user not registered
+        if(str(user.id) not in context.bot_data['users']): # user not registered
             update.message.reply_text(text='User not registered! Use /start to begin registration')
             return ConversationHandler.END
     logger.info('Asking user for facility')
@@ -545,7 +545,7 @@ def bookingDelete(update: Update, context: CallbackContext) -> int:
         return DATE
     context.user_data['booking_date']=bd.strftime('%d/%m/%Y')
     logger.info(f'removing booking for {booking_date}')
-    userid = update.effective_user.id
+    userid = str(update.effective_user.id)
     rankname = context.bot_data['users'][userid]['rankname']
     cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
     booking_facility = int(context.user_data['facility'])
@@ -602,7 +602,7 @@ def deleteHandler(update: Update, context: CallbackContext) -> int:
 def viewDay(update: Update, context: CallbackContext) -> int:   # view start point
     user = update.effective_user
     if('users' in context.bot_data):
-        if(user.id not in context.bot_data['users']): # user not registered
+        if(str(user.id) not in context.bot_data['users']): # user not registered
             update.message.reply_text(text='User not registered! Use /start to begin registration')
             return ConversationHandler.END
     logger.info('Asking user for date for viewing')
@@ -636,7 +636,7 @@ def viewWeek(update: Update, context: CallbackContext) -> int:   # Registration 
     user = update.effective_user
     context.user_data.clear()
     if('users' in context.bot_data):
-        if(user.id not in context.bot_data['users']): # user not registered
+        if(str(user.id) not in context.bot_data['users']): # user not registered
             update.message.reply_text(text='User not registered! Use /start to begin registration')
             return ConversationHandler.END
     logger.info('Asking user for facility')
@@ -662,7 +662,7 @@ def view(update: Update, context: CallbackContext) -> int:
     bot = context.bot
     user = update.effective_user
     if('users' in context.bot_data):
-        if(user.id not in context.bot_data['users']): # user not registered
+        if(str(user.id) not in context.bot_data['users']): # user not registered
             update.message.reply_text(text='User not registered! Use /start to begin registration')
             return
     args = context.args
@@ -674,7 +674,7 @@ def view(update: Update, context: CallbackContext) -> int:
     logger.info(f'generating overview image')
     bot.send_photo(chat_id=update.effective_chat.id, photo=img)
 
-def reminder(update: Update, context: CallbackContext) -> int:
+def reminder(context: CallbackContext) -> int:
     bot = context.bot
     if('users' in context.bot_data):
         for user in context.bot_data['users']: 
