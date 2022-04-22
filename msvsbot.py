@@ -304,10 +304,13 @@ def setup(update: Update, context: CallbackContext) -> None:
         context.bot_data['requests']={}
     if('daily_job' not in context.bot_data):
         context.bot_data['daily_job'] =''
-    if(context.job_queue.get_jobs_by_name(context.bot_data['daily_job']) is None):
-        logger.info('Creating daily reminder')
-        job = context.job_queue.run_daily(reminder, context=update.message.chat_id,days=(0, 1, 2, 3, 4),time = datetime.time(hour = 15, minute = 30, second = 00, tzinfo=tz))
-        context.bot_data['daily_job'] = job.name
+    if(context.job_queue.get_jobs_by_name(context.bot_data['daily_job']) is not None):
+        for j in context.job_queue.get_jobs_by_name(context.bot_data['daily_job']):
+            j.schedule_removal()
+    logger.info('Creating daily reminder')
+    job = context.job_queue.run_daily(reminder, context=update.message.chat_id,days=(0, 1, 2, 3, 4),time = datetime.time(hour = 15, minute = 37, second = 00, tzinfo=tz))
+    logger.info(f'next job execution at {job.next_t.isoformat()}')
+    context.bot_data['daily_job'] = job.name
     update.message.reply_text('Bot initialization complete!')
     
 def reset(update: Update, context: CallbackContext) -> None:
