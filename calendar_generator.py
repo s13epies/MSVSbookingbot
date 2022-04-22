@@ -157,7 +157,7 @@ def createImageWeek(facility:int):
         if(end<7 or start>18):
             continue
         # plot event
-        ax.add_patch(Rectangle((end, day), width=(start-end), height=1, color=colors[day], alpha=1, ec='k',lw=0.7))
+        ax.add_patch(Rectangle((end, day), width=(start-end), height=1, color=colors[day-1], alpha=1, ec='k',lw=0.7))
         #plot name of booking
         plt.text((start+end)/2, day+0.5, f'''{event}''', va='center', ha='center', fontsize=5)
         # plot beginning time
