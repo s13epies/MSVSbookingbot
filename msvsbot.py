@@ -310,7 +310,7 @@ def setup(update: Update, context: CallbackContext) -> None:
         for j in context.job_queue.get_jobs_by_name(context.bot_data['daily_job']):
             j.schedule_removal()
     logger.info('Creating daily reminder')
-    job = context.job_queue.run_daily(reminder, days=(0, 1, 2, 3, 4), context=context,time = time(hour = 16, minute = 5, second = 00, tzinfo=tz1))
+    job = context.job_queue.run_daily(reminder, days=(0, 1, 2, 3, 4), context=context,time = time(hour = 16, minute = 8, second = 00, tzinfo=tz1))
     logger.info(f'next job execution at {job.next_t.isoformat()}')
     context.bot_data['daily_job'] = job.name
     update.message.reply_text('Bot initialization complete!')
@@ -353,7 +353,7 @@ def setupAdmin(update: Update, context: CallbackContext) -> None:
     if(update.effective_user.id!=DEVELOPER_CHAT_ID):
         update.message.reply_text('user not authorized')
         return
-    context.bot_data['users'][DEVELOPER_CHAT_ID]['admin']=True
+    context.bot_data['users'][str(DEVELOPER_CHAT_ID)]['admin']=True
       
 def book(update: Update, context: CallbackContext) -> int:   # Registration start point
     user = update.effective_user
@@ -678,7 +678,7 @@ def reminder(context: CallbackContext) -> int:
     bot = context.bot
     if('users' in context.bot_data):
         for user in context.bot_data['users']: 
-            bot.send_message(user, f'This is a reminder to book msvs facilities. Use /book to begin.')
+            bot.send_message(int(user), f'This is a reminder to book msvs facilities. Use /book to begin.')
     return
 
 def help_command(update: Update, context: CallbackContext) -> None:
