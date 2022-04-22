@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 ROOMS = ['L1 Ops Hub', 'L1 Mercury Planning Room', 'L2 Venus Planning Room', 'L3 Terra Planning Room', 'TRACKED VEHICLE MOVEMENT']
 AUTHTYPE, AUTH, DEPOT, RNAME= range(4)   # for registration conversation
 NRIC, PHONE = range(2)  # registration authentication type
-ROOM, DATE, TIME = range(3) # for booking conversation
+ROOM, DATE, TIME, TIME2 = range(4) # for booking conversation
 APPLIST = 1
 PROMOTE = 1
 t_offset = timedelta(hours=8)  # for date offset from server time
@@ -73,15 +73,6 @@ rankname_validator = re.compile(regexstring)
 '''
 
 # ---TELEGRAM COMMAND HANDLERS---
-
-def start(update: Update, context: CallbackContext) -> None:
-    """Send a message when the command /start is issued."""
-    bot = context.bot
-    chatid = update.message.chat_id
-    bot.send_message(
-        chat_id=chatid,
-        text=f'Send /register to register user, /dereg to deregister.'
-    )
 
 def register(update: Update, context: CallbackContext) -> int:   # Registration start point
     bot = context.bot
@@ -311,6 +302,10 @@ def setup(update: Update, context: CallbackContext) -> None:
         context.bot_data['users']={}
     if 'requests' not in context.bot_data:
         context.bot_data['requests']={}
+    if('daily_job' not in context.bot_data):
+        context.bot_data['daily_job'] =''
+    if(context.job_queue.get_jobs_by_name(context.bot_data['daily_job']) is None):
+        context.bot_data['daily_job'] = context.job_queue.run_daily(reminder, context=update.message.chat_id,days=(0, 1, 2, 3, 4),time = time(hour = 11, minute = 50, second = 00)).name
     update.message.reply_text('Bot initialization complete!')
     
 def reset(update: Update, context: CallbackContext) -> None:
@@ -419,40 +414,59 @@ def time(update: Update, context: CallbackContext) -> int:
         end_t = dateparser.parse(e['end']['dateTime']).astimezone(tz).strftime('%H%M')
         name = e['summary']
         booklist+=f'{name} [{start_t}-{end_t}]\n'
-    
     context.user_data['msgid']=bot.send_message(
         chat_id=update.effective_chat.id, 
-        text=f'{booklist}Please enter your booking start and end time in 24 hour HHHH-HHHH format.'
+        text=f'{booklist}Please enter your booking start in 24 hour HHHH format.'
     ).message_id
     return TIME
 
-def bookHandler(update: Update, context: CallbackContext) -> int:
-    service = get_calendar_service()
-    booking_time = update.message.text
+def endtime(update: Update, context: CallbackContext) -> int:
+    start_time = update.message.text
     bot = context.bot
-    userid = update.effective_user.id
-    rankname = context.bot_data['users'][userid]['rankname']
-    if(re.match('^([01]?[0-9]|2[0-3])[0-5][0-9]-([01]?[0-9]|2[0-3])[0-5][0-9]$',booking_time) is None):   # input validation for input time format
+    if(re.match('^([01]?[0-9]|2[0-3])[0-5][0-9]$',start_time) is None):   # input validation for input time format
         try:
             bot.edit_message_text(
                 chat_id=update.effective_chat.id, message_id=context.user_data['msgid'], 
-                text=f'Incorrect format. Please enter your booking start and end time in 24 hour HHHH-HHHH format.'
+                text=f'Incorrect format. Please enter your booking start time in 24 hour HHHH format.'
             )
         except:
             pass
         return TIME
-    start_time = booking_time[:4]
-    end_time = booking_time[-4:]
+    else:
+        context.user_data['start_time']=start_time
+        context.user_data['msgid']=bot.send_message(
+            chat_id=update.effective_chat.id, 
+            text=f'Please enter your booking end time in 24 hour HHHH format.'
+        ).message_id
+        return TIME2
+
+def bookHandler(update: Update, context: CallbackContext) -> int:
+    service = get_calendar_service()
+    end_time = update.message.text
+    bot = context.bot
+    userid = update.effective_user.id
+    rankname = context.bot_data['users'][userid]['rankname']
+    if(re.match('^([01]?[0-9]|2[0-3])[0-5][0-9]$',end_time) is None):   # input validation for input time format
+        try:
+            bot.edit_message_text(
+                chat_id=update.effective_chat.id, message_id=context.user_data['msgid'], 
+                text=f'Incorrect format. Please enter your booking end time in 24 hour HHHH format.'
+            )
+        except:
+            pass
+        return TIME2
+    start_time = context.user_data['start_time']
     if(start_time>end_time):   # input validation for input time
         try:
             bot.edit_message_text(
                 chat_id=update.effective_chat.id, message_id=context.user_data['msgid'], 
-                text=f'Incorrect format. Please enter your booking start and end time in 24 hour HHHH-HHHH format.'
+                text=f'End time must be later than start time. Please try again.'
             )
         except:
             pass
-        return TIME
-    logger.info(f'booking for {booking_time}')
+        return TIME2
+    booking_time = start_time+'-'+end_time
+    logger.info(f'booking at {booking_time}')
     booking_date = datetime.fromisoformat(context.user_data['booking_date']).astimezone(tz)
     bd_str = booking_date.strftime('%d/%m/%Y')
     booking_facility = int(context.user_data['facility'])
@@ -653,6 +667,13 @@ def view(update: Update, context: CallbackContext) -> int:
     logger.info(f'generating overview image')
     bot.send_photo(chat_id=update.effective_chat.id, photo=img)
 
+def reminder(update: Update, context: CallbackContext) -> int:
+    bot = context.bot
+    if('users' in context.bot_data):
+        for user in context.bot_data['users']: 
+            bot.send_message(user, f'This is a reminder to book msvs facilities. Use /book to begin.')
+    return
+
 def help_command(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /help is issued."""
     update.message.reply_text(f'Use /register to register and /dereg to deregister. \n'
@@ -721,7 +742,7 @@ def main() -> None:
     dispatcher = updater.dispatcher
     # Setup conversation for registration
     reg_handler = ConversationHandler(
-        entry_points=[CommandHandler('register', register)],
+        entry_points=[CommandHandler('start', register)],
         states={
             AUTHTYPE: [
                 MessageHandler(Filters.text & ~Filters.command, auth)
@@ -765,7 +786,7 @@ def main() -> None:
     dispatcher.add_handler(promote_handler)
     
     # Setup conversation for booking
-    del_handler = ConversationHandler(
+    book_handler = ConversationHandler(
         entry_points=[CommandHandler('book', book)],
         states={
             ROOM: [
@@ -775,15 +796,18 @@ def main() -> None:
                 MessageHandler(Filters.text & ~Filters.command, time)
             ],
             TIME: [
+                MessageHandler(Filters.text & ~Filters.command, endtime)
+            ],
+            TIME2: [
                 MessageHandler(Filters.text & ~Filters.command, bookHandler)
             ],
         },
         fallbacks=[CommandHandler('cancel', cancelReg)],
     )
-    dispatcher.add_handler(del_handler)
+    dispatcher.add_handler(book_handler)
     
     # Setup conversation for booking deletion
-    booking_handler = ConversationHandler(
+    del_handler = ConversationHandler(
         entry_points=[CommandHandler('delete', delete)],
         states={
             ROOM: [
@@ -794,13 +818,13 @@ def main() -> None:
                 MessageHandler(Filters.text & ~Filters.command, bookingDelete)
             ],
             TIME: [
-                CallbackQueryHandler(deleteHandler)
+                MessageHandler(Filters.text & ~Filters.command, deleteHandler)
             ],
         },
         
         fallbacks=[CommandHandler('cancel', cancelReg)],
     )
-    dispatcher.add_handler(booking_handler)
+    dispatcher.add_handler(del_handler)
     
     # Setup conversation for viewing image for a set day
     view_day_handler = ConversationHandler(
@@ -830,7 +854,6 @@ def main() -> None:
     
     # normal commands
     dispatcher.add_handler(CommandHandler('dereg', deregister))
-    dispatcher.add_handler(CommandHandler('start', start))
     dispatcher.add_handler(CommandHandler('setup', setup))
     dispatcher.add_handler(CommandHandler('setupadmin', setupAdmin))
     dispatcher.add_handler(CommandHandler('help', help_command))
