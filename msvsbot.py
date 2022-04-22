@@ -308,7 +308,7 @@ def setup(update: Update, context: CallbackContext) -> None:
         for j in context.job_queue.get_jobs_by_name(context.bot_data['daily_job']):
             j.schedule_removal()
     logger.info('Creating daily reminder')
-    job = context.job_queue.run_daily(reminder, context=update.message.chat_id,days=(0, 1, 2, 3, 4),time = time(hour = 15, minute = 37, second = 00, tzinfo=tz))
+    job = context.job_queue.run_daily(reminder, context=update.message.chat_id,days=(0, 1, 2, 3, 4),time = time(hour = 15, minute = 40, second = 00, tzinfo=tz))
     logger.info(f'next job execution at {job.next_t.isoformat()}')
     context.bot_data['daily_job'] = job.name
     update.message.reply_text('Bot initialization complete!')
