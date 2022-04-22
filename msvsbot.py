@@ -26,6 +26,7 @@ from telegram.ext import (
 from postgrespersistence import PostgresPersistence
 import re
 import os
+import pytz
 import base64
 from calendar_generator import createImageAll, createImageDay, createImageWeek, get_calendar_service, get_event_list
 # stuff for google calendar api
@@ -55,6 +56,7 @@ APPLIST = 1
 PROMOTE = 1
 t_offset = timedelta(hours=8)  # for date offset from server time
 tz = timezone(timedelta(hours=8))
+tz1 = pytz.timezone('Asia/Singapore')
 # for error logging
 PORT = int(os.environ.get('PORT', 5000))
 regexstring = '^(ME[1-8][AT]?|REC|PTE|LCP|CPL|CFC|SCT|OCT|([1-3]|[MS])SG|([1-3]|[MSC])WO|2LT|LTA|CPT|MAJ|LTC|SLTC|COL|BG|MG|LG|GEN) [a-zA-Z][a-zA-Z ]+$'
@@ -308,7 +310,7 @@ def setup(update: Update, context: CallbackContext) -> None:
         for j in context.job_queue.get_jobs_by_name(context.bot_data['daily_job']):
             j.schedule_removal()
     logger.info('Creating daily reminder')
-    job = context.job_queue.run_daily(reminder, context=update.message.chat_id,days=(0, 1, 2, 3, 4),time = time(hour = 15, minute = 40, second = 00, tzinfo=tz))
+    job = context.job_queue.run_daily(reminder, context=update.message.chat_id,days=(0, 1, 2, 3, 4),time = time(hour = 15, minute = 40, second = 00, tzinfo=tz1))
     logger.info(f'next job execution at {job.next_t.isoformat()}')
     context.bot_data['daily_job'] = job.name
     update.message.reply_text('Bot initialization complete!')
