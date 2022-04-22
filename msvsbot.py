@@ -8,7 +8,7 @@ Press Ctrl-C on the command line to stop the bot.
 '''
 import logging
 import dateparser
-from datetime import datetime, timedelta, timezone, tzinfo
+from datetime import datetime, timedelta, timezone, tzinfo, time
 import html
 import json
 import traceback
@@ -308,7 +308,7 @@ def setup(update: Update, context: CallbackContext) -> None:
         for j in context.job_queue.get_jobs_by_name(context.bot_data['daily_job']):
             j.schedule_removal()
     logger.info('Creating daily reminder')
-    job = context.job_queue.run_daily(reminder, context=update.message.chat_id,days=(0, 1, 2, 3, 4),time = datetime.time(hour = 15, minute = 37, second = 00, tzinfo=tz))
+    job = context.job_queue.run_daily(reminder, context=update.message.chat_id,days=(0, 1, 2, 3, 4),time = time(hour = 15, minute = 37, second = 00, tzinfo=tz))
     logger.info(f'next job execution at {job.next_t.isoformat()}')
     context.bot_data['daily_job'] = job.name
     update.message.reply_text('Bot initialization complete!')
@@ -382,7 +382,7 @@ def date(update: Update, context: CallbackContext) -> int:
     )
     return DATE
 
-def time(update: Update, context: CallbackContext) -> int:
+def time1(update: Update, context: CallbackContext) -> int:
     booking_date = update.message.text 
     bd = dateparser.parse(booking_date, settings={'DATE_ORDER': 'DMY'})
     logger.info(f'BD0={bd}')
@@ -798,7 +798,7 @@ def main() -> None:
                 CallbackQueryHandler(date)
             ],
             DATE: [
-                MessageHandler(Filters.text & ~Filters.command, time)
+                MessageHandler(Filters.text & ~Filters.command, time1)
             ],
             TIME: [
                 MessageHandler(Filters.text & ~Filters.command, endtime)
