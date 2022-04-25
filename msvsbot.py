@@ -878,7 +878,7 @@ def main() -> None:
                           port=int(PORT),
                           url_path=TOKEN,
                           webhook_url=f"https://{N}.herokuapp.com/{TOKEN}")
-     
+    # updater.start_polling()
 
     # Run the bot until you press Ctrl-C or the process receives SIGINT,
     # SIGTERM or SIGABRT. This should be used most of the time, since

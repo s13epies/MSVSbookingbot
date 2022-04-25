@@ -32,6 +32,8 @@ def main() -> None:
     if('users' in bot_data):
         for user in bot_data['users']: 
             bot.send_message(int(user), f'This is a reminder to book msvs facilities. Use /book to begin.')
+    updater.idle()
+    updater.stop()
     return
 
 if __name__ == '__main__':
