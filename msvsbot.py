@@ -215,6 +215,9 @@ def approveHandler(update: Update, context: CallbackContext) -> int:
     bot.send_message(
             chat_id=update.effective_chat.id,
             text=f'Approved user {auth_rankname}')
+    bot.send_message(
+            chat_id=int(auth_user),
+            text=f'You have been approved!')
     return ConversationHandler.END
 
 def promote(update: Update, context: CallbackContext) -> int:
@@ -254,13 +257,16 @@ def promoteHandler(update: Update, context: CallbackContext) -> int:
             chat_id=update.effective_chat.id,
             text=f'Action cancelled.')
         return ConversationHandler.END
-    admin_user = int(admin_user)
+    admin_user = str(admin_user)
     context.bot_data['users'][admin_user]['admin']=True
     admin_rn = context.bot_data['users'][admin_user]['rankname']
     query.answer()
     bot.send_message(
             chat_id=update.effective_chat.id,
             text=f'Promoted user {admin_rn}')
+    bot.send_message(
+            chat_id=int(admin_user),
+            text=f'You have been promoted!')
     return ConversationHandler.END
 
 def cancelReg(update: Update, context: CallbackContext) -> int:
