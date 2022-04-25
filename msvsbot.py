@@ -204,7 +204,7 @@ def approveHandler(update: Update, context: CallbackContext) -> int:
             text=f'Action cancelled.')
         return ConversationHandler.END
     
-    auth_user = int(auth_user)
+    auth_user = str(auth_user)
     auth_dict = context.bot_data['requests'].pop(auth_user)
     auth_rankname = auth_dict['rankname']
     context.bot_data['approved'].append(context.bot_data['requests'][auth_user]['auth_key'])
