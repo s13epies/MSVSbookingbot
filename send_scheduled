@@ -1,4 +1,5 @@
 from asyncio.log import logger
+import json
 import time
 from msvsbot import init_testing_deploy
 import os
@@ -31,7 +32,8 @@ def main() -> None:
     dispatcher = updater.dispatcher
     bot = dispatcher.bot
     bot_data = dispatcher.bot_data
-    logger.info(bot_data)
+    
+    logger.info(f'bot data:\n{json.dumps(bot_data)}')
     if('users' in bot_data):
         for user in bot_data['users']: 
             bot.send_message(int(user), f'This is a reminder to book msvs facilities. Use /book to begin.')
