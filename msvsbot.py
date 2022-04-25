@@ -21,7 +21,6 @@ from telegram.ext import (
     CallbackContext,
     MessageHandler,
     Filters,
-    PicklePersistence,
 )
 from postgrespersistence import PostgresPersistence
 import re
