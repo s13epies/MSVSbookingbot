@@ -16,7 +16,7 @@ def check_track_movement():
     bd = datetime.today()
     bd = datetime.combine(bd.date(), datetime.min.time(), tzinfo=tz)
     logger.info(f'BD={bd}')
-    booklist = f'Tracked Vehicle Movement for {bd.isoformat()}:\n'
+    booklist = ''
     cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
     calendarId = cal_ids[-1]
     daystart_dt = bd
