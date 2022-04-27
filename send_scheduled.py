@@ -1,5 +1,5 @@
 from asyncio.log import logger
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, tzinfo
 import json
 import time
 
@@ -13,7 +13,7 @@ from telegram.ext import (
 from calendar_generator import createImageAll, createImageDay, createImageWeek, get_calendar_service, get_event_list
 def check_track_movement():
     tz = timezone(timedelta(hours=8))
-    bd = datetime.today()
+    bd = datetime.now(tz=tz)
     bd = datetime.combine(bd.date(), datetime.min.time(), tzinfo=tz)
     logger.info(f'BD={bd}')
     booklist = ''
