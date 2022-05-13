@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 ROOMS = ['L1 Ops Hub', 'L1 Mercury Planning Room', 'L2 Venus Planning Room', 'L3 Terra Planning Room']
 TRACK = 'TRACKED VEHICLE MOVEMENT' # for tracked booking
 UNIT = ['SBW','AMB','40','41','42','48','ICT/TI','OTHERS'] # Unit
-AUTHTYPE, AUTH, DEPOT, RNAME= range(4)   # for registration conversation
+AUTHTYPE, AUTH, UNIT1, RNAME= range(4)   # for registration conversation
 NRIC, PHONE = range(2)  # registration authentication type
 ROOM, DATE, TIME, TIME2 = range(4) # for booking conversation
 APPLIST = 1
@@ -130,7 +130,7 @@ def unit(update: Update, context: CallbackContext) -> int:
     reply_markup = InlineKeyboardMarkup(keyboard)
     msgid = update.message.reply_text(text=f'Please select your unit', reply_markup=reply_markup).message_id
     context.user_data['msgid'] = msgid
-    return UNIT
+    return UNIT1
 
 def regHandler(update: Update, context: CallbackContext) -> int:
     bot = context.bot
@@ -580,6 +580,8 @@ def bookTrackHandler(update: Update, context: CallbackContext) -> int:
     bot = context.bot
     userid = str(update.effective_user.id)
     rankname = context.bot_data['users'][userid]['rankname']
+    unit = context.bot_data['users'][userid]['unit']
+    nameunit = rankname + ' ' + unit
     if(re.match('^([01]?[0-9]|2[0-3])[0-5][0-9]$',end_time) is None):   # input validation for input time format
         try:
             bot.edit_message_text(
@@ -624,7 +626,7 @@ def bookTrackHandler(update: Update, context: CallbackContext) -> int:
         )
         return TIME
     booking = {
-        'summary': rankname,
+        'summary': nameunit,
         'start': {
             'dateTime': start_dt.isoformat(),
         },
@@ -888,7 +890,7 @@ def main() -> None:
             RNAME:   [
                 MessageHandler(Filters.text & ~Filters.command, unit)
             ],
-            UNIT: [
+            UNIT1: [
                 MessageHandler(Filters.text & ~Filters.command, regHandler)
             ]
         },
