@@ -47,7 +47,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 #static stuff
-ROOMS = ['L1 Ops Hub', 'L1 Mercury Planning Room', 'L2 Venus Planning Room', 'L3 Terra Planning Room']
+ROOMS = ['L1 Ops Hub', 'L1 Mercury Planning Room', 'L2 Venus Planning Room', 'L3 Terra Planning Room','TRACKED VEHICLE MOVEMENT']
 TRACK = 'TRACKED VEHICLE MOVEMENT' # for tracked booking
 UNIT = ['SBW','AMB','40','41','42','48','ICT/TI','OTHERS'] # Unit
 AUTHTYPE, AUTH, RNAME, UNIT1, UNAME = range(5)   # for registration conversation
@@ -405,7 +405,7 @@ def book(update: Update, context: CallbackContext) -> int:   # Registration star
     context.user_data.clear()
     logger.info('Asking user for facility')
     keyboard = [
-        [InlineKeyboardButton(f'{room}', callback_data=i)] for i, room in enumerate(ROOMS)
+        [InlineKeyboardButton(f'{room}', callback_data=i)] for i, room in enumerate(ROOMS[:-1])
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     msgid = update.message.reply_text(text=f'Please select the facility you would like to book', reply_markup=reply_markup).message_id
