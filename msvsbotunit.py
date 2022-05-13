@@ -983,7 +983,7 @@ def main() -> None:
                 MessageHandler(Filters.text & ~Filters.command, bookingDelete)
             ],
             TIME: [
-                MessageHandler(Filters.text & ~Filters.command, deleteHandler)
+                CallbackQueryHandler(deleteHandler)
             ],
         },
         
