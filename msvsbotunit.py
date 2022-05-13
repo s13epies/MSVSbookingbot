@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 ROOMS = ['L1 Ops Hub', 'L1 Mercury Planning Room', 'L2 Venus Planning Room', 'L3 Terra Planning Room']
 TRACK = 'TRACKED VEHICLE MOVEMENT' # for tracked booking
 UNIT = ['SBW','AMB','40','41','42','48','ICT/TI','OTHERS'] # Unit
-AUTHTYPE, AUTH, RNAME, UNIT1= range(4)   # for registration conversation
+AUTHTYPE, AUTH, RNAME, UNIT1, UNAME = range(5)   # for registration conversation
 NRIC, PHONE = range(2)  # registration authentication type
 ROOM, DATE, TIME, TIME2 = range(4) # for booking conversation
 APPLIST = 1
@@ -134,9 +134,17 @@ def unit(update: Update, context: CallbackContext) -> int:
 
 def regHandler(update: Update, context: CallbackContext) -> int:
     bot = context.bot
-    query = update.callback_query
-    unit = UNIT[int(query.data)]
-    query.answer()
+    if(update.callback_query is not None):
+        query = update.callback_query
+        unit = UNIT[int(query.data)]
+        query.answer()
+    else:
+        unit = update.message.text
+    
+    if unit == UNIT[-1]:
+        logger.info('registration complete')
+        bot.send_message(chat_id=update.effective_chat.id, text=f'Please enter your unit name.')
+        return UNIT1
     logger.info('At reg handler')
     userid = str(update.effective_user.id)
     rankname = context.user_data['rankname']
