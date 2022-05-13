@@ -893,7 +893,8 @@ def main() -> None:
                 MessageHandler(Filters.text & ~Filters.command, unit)
             ],
             UNIT1: [
-                CallbackQueryHandler(regHandler)
+                CallbackQueryHandler(regHandler),
+                MessageHandler(Filters.text & ~Filters.command, regHandler)
             ]
         },
         
