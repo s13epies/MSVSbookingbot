@@ -679,6 +679,8 @@ def bookingDelete(update: Update, context: CallbackContext) -> int:
     logger.info(f'removing booking for {booking_date}')
     userid = str(update.effective_user.id)
     rankname = context.bot_data['users'][userid]['rankname']
+    unit = context.bot_data['users'][userid]['unit']
+    nameunit = rankname + ' ' + unit
     cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
     booking_facility = int(context.user_data['facility'])
     calendarId = cal_ids[booking_facility]
@@ -693,7 +695,7 @@ def bookingDelete(update: Update, context: CallbackContext) -> int:
         end_t = dateparser.parse(e['end']['dateTime']).astimezone(tz).strftime('%H%M')
         name = e['summary']
         id = e['id']
-        if(name==rankname):
+        if(name==nameunit):
             valid = True
             keyboard.append([InlineKeyboardButton(f'[{start_t}-{end_t}]', callback_data=id)])
     if not valid:
