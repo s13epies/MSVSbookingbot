@@ -139,7 +139,7 @@ def regHandler(update: Update, context: CallbackContext) -> int:
     context.user_data['unit']=unit
     query.answer()
     userid = str(update.effective_user.id)
-    unit = context.user_data['unit']
+    unit = UNIT[int(context.user_data['unit'])]
     rankname = context.user_data['rankname']
     nric = context.user_data['nric']
     phone = context.user_data['phone']
@@ -414,8 +414,7 @@ def booktrack(update: Update, context: CallbackContext) -> int:  # Tracked Regis
             return ConversationHandler.END
     context.user_data.clear()
     logger.info('Booking tracked vehicle movement')
-    
-    return TRACK
+    return ROOM
 
 def trackdate(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
@@ -637,7 +636,7 @@ def bookTrackHandler(update: Update, context: CallbackContext) -> int:
     logger.info('Event created: %s' % (event.get('htmlLink')))
     bot.send_message(
         chat_id=update.effective_chat.id, 
-        text=f'Booking made for {ROOMS[booking_facility]} on {bd_str} {booking_time}'
+        text=f'Booking made for {TRACK} on {bd_str} {booking_time}'
     )
     context.user_data.clear()
     return ConversationHandler.END
@@ -950,7 +949,7 @@ def main() -> None:
     booktracked_handler = ConversationHandler(
         entry_points=[CommandHandler('book_tracked', booktrack)],
         states={
-            TRACK: [
+            ROOM: [
                 CallbackQueryHandler(trackdate)
             ],
             DATE: [
