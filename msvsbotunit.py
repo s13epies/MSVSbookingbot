@@ -413,12 +413,6 @@ def booktrack(update: Update, context: CallbackContext) -> int:  # Tracked Regis
             return ConversationHandler.END
     context.user_data.clear()
     logger.info('Booking tracked vehicle movement')
-    return ROOM
-
-def trackdate(update: Update, context: CallbackContext) -> int:
-    query = update.callback_query
-    logger.info(f'user booking facility {TRACK}')
-    query.answer()
     bot = context.bot
     bot.edit_message_text(
         chat_id=update.effective_chat.id, message_id=context.user_data['msgid'], 
@@ -950,9 +944,6 @@ def main() -> None:
     booktracked_handler = ConversationHandler(
         entry_points=[CommandHandler('book_tracked', booktrack)],
         states={
-            ROOM: [
-                CallbackQueryHandler(trackdate)
-            ],
             DATE: [
                 MessageHandler(Filters.text & ~Filters.command, time1)
             ],
