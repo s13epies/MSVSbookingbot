@@ -135,11 +135,9 @@ def unit(update: Update, context: CallbackContext) -> int:
 def regHandler(update: Update, context: CallbackContext) -> int:
     bot = context.bot
     query = update.callback_query
-    unit = int(query.data) 
-    context.user_data['unit']=unit
+    unit = UNIT[int(query.data)]
     query.answer()
     userid = str(update.effective_user.id)
-    unit = UNIT[int(context.user_data['unit'])]
     rankname = context.user_data['rankname']
     nric = context.user_data['nric']
     phone = context.user_data['phone']
