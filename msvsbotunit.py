@@ -150,10 +150,10 @@ def regHandler(update: Update, context: CallbackContext) -> int:
             'admin':False
         }
         logger.info('registration complete')
-        bot.send_message(chat_id=update.effective_chat.id, text=f'You have successfully registered as {rankname}, {unit}.')    
+        bot.send_message(chat_id=update.effective_chat.id, text=f'You have successfully registered as {rankname} from {unit}.')    
     else:
         logger.info('registration pending approval')
-        bot.send_message(chat_id=update.effective_chat.id, text=f'You are now pending registration as {rankname}, {unit}. Please ask an admin to approve you.') 
+        bot.send_message(chat_id=update.effective_chat.id, text=f'You are now pending registration as {rankname} from {unit}. Please ask an admin to approve you.') 
         context.bot_data['requests'][userid]={
                     'auth_key':auth_key,
                     'rankname':rankname,
@@ -321,7 +321,7 @@ def deregister(update: Update, context: CallbackContext) -> None:
     rname = context.bot_data['users'][userid]['rankname']
     unit = context.bot_data['users'][userid]['unit']
     context.bot_data['users'].pop(userid)
-    bot.send_message(chat_id=update.effective_chat.id, text=f'User {rname} {unit} deregistered.')
+    bot.send_message(chat_id=update.effective_chat.id, text=f'User {rname} from {unit} deregistered.')
     return
     
 def setup(update: Update, context: CallbackContext) -> None:
