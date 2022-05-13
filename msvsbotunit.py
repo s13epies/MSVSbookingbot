@@ -413,6 +413,7 @@ def booktrack(update: Update, context: CallbackContext) -> int:  # Tracked Regis
             return ConversationHandler.END
     context.user_data.clear()
     logger.info('Booking tracked vehicle movement')
+    context.user_data['facility'] = 4
     bot = context.bot
     bot.send_message(
         chat_id=update.effective_chat.id, 
