@@ -319,7 +319,7 @@ def deregister(update: Update, context: CallbackContext) -> None:
         bot.send_message(chat_id=update.effective_chat.id, text=f'User not registered!')
         return
     rname = context.bot_data['users'][userid]['rankname']
-    unit = context.bot_data['user'][userid]['unit']
+    unit = context.bot_data['users'][userid]['unit']
     context.bot_data['users'].pop(userid)
     bot.send_message(chat_id=update.effective_chat.id, text=f'User {rname} {unit} deregistered.')
     return
