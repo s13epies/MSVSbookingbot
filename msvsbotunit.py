@@ -414,8 +414,8 @@ def booktrack(update: Update, context: CallbackContext) -> int:  # Tracked Regis
     context.user_data.clear()
     logger.info('Booking tracked vehicle movement')
     bot = context.bot
-    bot.edit_message_text(
-        chat_id=update.effective_chat.id, message_id=context.user_data['msgid'], 
+    bot.send_message(
+        chat_id=update.effective_chat.id, 
         text=f'Please enter the date of booking for {TRACK}'
     )
     return DATE
