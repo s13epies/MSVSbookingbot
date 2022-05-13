@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 ROOMS = ['L1 Ops Hub', 'L1 Mercury Planning Room', 'L2 Venus Planning Room', 'L3 Terra Planning Room']
 TRACK = 'TRACKED VEHICLE MOVEMENT' # for tracked booking
 UNIT = ['SBW','AMB','40','41','42','48','ICT/TI','OTHERS'] # Unit
-AUTHTYPE, AUTH, UNIT1, RNAME= range(4)   # for registration conversation
+AUTHTYPE, AUTH, RNAME, UNIT1= range(4)   # for registration conversation
 NRIC, PHONE = range(2)  # registration authentication type
 ROOM, DATE, TIME, TIME2 = range(4) # for booking conversation
 APPLIST = 1
@@ -137,6 +137,7 @@ def regHandler(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
     unit = UNIT[int(query.data)]
     query.answer()
+    logger.info('At reg handler')
     userid = str(update.effective_user.id)
     rankname = context.user_data['rankname']
     nric = context.user_data['nric']
