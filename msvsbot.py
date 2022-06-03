@@ -368,6 +368,8 @@ def approveBookingHandler(update: Update, context: CallbackContext) -> int:
             bot.send_message(
                 chat_id=int(user),
                 text=f'Your booking has been denied as the selected timeslot is no longer available. Please book another timeslot.')
+        
+        context.bot_data['booking_requests'].pop(int(req[0]))
         return ConversationHandler.END
     
     if not req[1]:
