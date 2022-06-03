@@ -1068,7 +1068,6 @@ def main() -> None:
     )
     dispatcher.add_handler(book_handler)
     
-    # EDITED
     # Setup conversation for booking under tracked vehicle movement
     booktracked_handler = ConversationHandler(
         entry_points=[CommandHandler('book_tracked', booktrack)],
@@ -1086,7 +1085,22 @@ def main() -> None:
         fallbacks=[CommandHandler('cancel', cancelReg)],
     )
     dispatcher.add_handler(booktracked_handler)
-    #END OF EDIT
+
+
+    # Setup conversation for approving bo0kings
+    booking_approve_handler = ConversationHandler(
+        entry_points=[CommandHandler('approve_booking', approveBooking)],
+        states={
+            SELECT_BOOKING: [
+                MessageHandler(Filters.text & ~Filters.command, approveBookingConfirm)
+            ],
+            APPROVE_BOOKING: [
+                MessageHandler(Filters.text & ~Filters.command, approveBookingHandler)
+            ],
+        },
+        fallbacks=[CommandHandler('cancel', cancelReg)],
+    )
+    dispatcher.add_handler(booking_approve_handler)
     
     # Setup conversation for booking deletion
     del_handler = ConversationHandler(
