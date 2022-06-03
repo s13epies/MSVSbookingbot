@@ -279,6 +279,8 @@ def approveBooking(update: Update, context: CallbackContext) -> int:
             text=f'You are not an admin! Please contact an admin.')
             return ConversationHandler.END
     keyboard = []
+    if('booking_requests' not in context.bot_data.keys()):
+        context.bot_data['booking_requests']=[]
     for i,request in enumerate(context.bot_data['booking_requests']):
         rn = request['rankname']
         un = request['unit']
