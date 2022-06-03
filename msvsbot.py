@@ -1089,15 +1089,15 @@ def main() -> None:
     dispatcher.add_handler(booktracked_handler)
 
 
-    # Setup conversation for approving bo0kings
+    # Setup conversation for approving bookings
     booking_approve_handler = ConversationHandler(
         entry_points=[CommandHandler('approve_booking', approveBooking)],
         states={
             SELECT_BOOKING: [
-                MessageHandler(Filters.text & ~Filters.command, approveBookingConfirm)
+                CallbackQueryHandler(approveBookingConfirm)
             ],
             APPROVE_BOOKING: [
-                MessageHandler(Filters.text & ~Filters.command, approveBookingHandler)
+                CallbackQueryHandler(approveBookingHandler)
             ],
         },
         fallbacks=[CommandHandler('cancel', cancelReg)],
