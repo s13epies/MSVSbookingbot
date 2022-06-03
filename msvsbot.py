@@ -262,6 +262,7 @@ def insertEvent(booking, booking_facility):
     service = get_calendar_service()
     cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
     calendarId = cal_ids[booking_facility]
+    
     e = service.events().insert(calendarId=calendarId, body=booking).execute()
     return e
 
@@ -293,10 +294,11 @@ def approveBooking(update: Update, context: CallbackContext) -> int:
         keyboard.append([InlineKeyboardButton(f'{ROOMS[facility]} {timestring} {rn} {un}', callback_data=str(i))])
     keyboard.append([InlineKeyboardButton(f'Cancel', callback_data=str('cancel'))])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    bot.send_message(
+    msg = bot.send_message(
         chat_id=update.effective_chat.id,
         text=f'Select a booking from the following:',
         reply_markup=reply_markup)
+    context.user_data['msgid'] = msg.message_id
     return SELECT_BOOKING
 
 def approveBookingConfirm(update: Update, context: CallbackContext) -> int:
@@ -313,8 +315,9 @@ def approveBookingConfirm(update: Update, context: CallbackContext) -> int:
     keyboard.append([InlineKeyboardButton(f'Approve', callback_data=json.dumps([req,True]))])
     keyboard.append([InlineKeyboardButton(f'Deny', callback_data=json.dumps([req,False]))])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    bot.send_message(
+    bot.edit_message_text(
         chat_id=update.effective_chat.id,
+        message_id = context.user_data['msgid'],
         text=f'Approve booking?',
         reply_markup=reply_markup)
     return APPROVE_BOOKING
@@ -336,16 +339,9 @@ def approveBookingHandler(update: Update, context: CallbackContext) -> int:
     sdt = datetime.fromisoformat(start)
     edt = datetime.fromisoformat(end)
     dt = sdt.strftime('%d/%m %H%M')+'-'+edt.strftime('%H%M')
-    
-    
-    if not req[1]:
-        bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=f'Denied booking for {ROOMS[facility]} at {dt}')
-        bot.send_message(
-            chat_id=int(user),
-            text=f'Your booking has been denied')
-        return ConversationHandler.END
+    cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
+    calendarId = cal_ids[facility]
+    event_list = get_event_list([calendarId], sdt, edt)
     nameunit = rn + ' ' + un
     booking = {
         'summary': nameunit,
@@ -356,14 +352,45 @@ def approveBookingHandler(update: Update, context: CallbackContext) -> int:
             'dateTime': end,
         },
     }
+    
+    if event_list:  # duplicate event
+        booked = event_list[0]
+        if booked==booking:
+            #duplicate event
+            bot.send_message(
+                chat_id=update.effective_chat.id,
+                text=f'Booking for {ROOMS[facility]} at {dt} is already approved!')
+        else:
+            bot.edit_message_text(
+                chat_id=update.effective_chat.id,
+                message_id = context.user_data['msgid'],
+                text=f'Denied booking for {ROOMS[facility]} at {dt}')
+            bot.send_message(
+                chat_id=int(user),
+                text=f'Your booking has been denied as the selected timeslot is no longer available. Please book another timeslot.')
+        return ConversationHandler.END
+    
+    if not req[1]:
+        bot.edit_message_text(
+            chat_id=update.effective_chat.id,
+            message_id = context.user_data['msgid'],
+            text=f'Denied booking for {ROOMS[facility]} at {dt}')
+        bot.send_message(
+            chat_id=int(user),
+            text=f'Your booking has been denied')
+        return ConversationHandler.END
+    
+    context.bot_data['booking_requests'].pop(int(req[0]))
     e=insertEvent(booking,facility)    
     logger.info('Event created: %s' % (e.get('htmlLink')))
-    bot.send_message(
+    bot.edit_message_text(
             chat_id=update.effective_chat.id,
+            message_id = context.user_data['msgid'],
             text=f'Approved booking for {ROOMS[facility]} at {dt}')
     bot.send_message(
             chat_id=int(user),
             text=f'Your booking has been approved!')
+    context.user_data.clear()
     return ConversationHandler.END
 
 def promote(update: Update, context: CallbackContext) -> int:
