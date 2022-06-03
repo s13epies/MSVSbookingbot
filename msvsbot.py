@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone, tzinfo, time
 import html
 import json
 import traceback
+from requests import request
 from telegram import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Update, ParseMode, ForceReply
 from telegram.ext import (
     Updater,
@@ -47,11 +48,14 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 #static stuff
-ROOMS = ['L1 Ops Hub', 'L1 Mercury Planning Room', 'L2 Venus Planning Room', 'L3 Terra Planning Room', 'TRACKED VEHICLE MOVEMENT']
-AUTHTYPE, AUTH, DEPOT, RNAME= range(4)   # for registration conversation
+ROOMS = ['L1 Ops Hub', 'L1 Mercury Planning Room', 'L2 Venus Planning Room', 'L3 Terra Planning Room','TRACKED VEHICLE MOVEMENT']
+TRACK = 'TRACKED VEHICLE MOVEMENT' # for tracked booking
+UNIT = ['SBW','AMB','40','41','42','48','ICT/TI','OTHERS'] # Unit
+AUTHTYPE, AUTH, RNAME, UNIT1, UNAME = range(5)   # for registration conversation
 NRIC, PHONE = range(2)  # registration authentication type
 ROOM, DATE, TIME, TIME2 = range(4) # for booking conversation
 APPLIST = 1
+SELECT_BOOKING, APPROVE_BOOKING = range(2)
 PROMOTE = 1
 t_offset = timedelta(hours=8)  # for date offset from server time
 tz = timezone(timedelta(hours=8))
@@ -117,32 +121,60 @@ def rankname(update: Update, context: CallbackContext) -> int:
     context.user_data['msgid'] = update.message.reply_text(text='Please enter your name:').message_id
     return RNAME
 
+#EDITED
+def unit(update: Update, context: CallbackContext) -> int:
+    rankname = update.message.text
+    context.user_data['rankname']=rankname
+    logger.info('Asking user for unit')
+    keyboard = [
+        [InlineKeyboardButton(f'{units}', callback_data=i)] for i, units in enumerate(UNIT)
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    msgid = update.message.reply_text(text=f'Please select your unit', reply_markup=reply_markup).message_id
+    context.user_data['msgid'] = msgid
+    return UNIT1
+
 def regHandler(update: Update, context: CallbackContext) -> int:
     bot = context.bot
-    rankname = update.message.text
+    if(update.callback_query is not None):
+        query = update.callback_query
+        unit = UNIT[int(query.data)]
+        query.answer()
+    else:
+        unit = update.message.text
+    
+    if unit == UNIT[-1]:
+        logger.info('registration complete')
+        bot.send_message(chat_id=update.effective_chat.id, text=f'Please enter your unit name.')
+        return UNIT1
+    logger.info('At reg handler')
     userid = str(update.effective_user.id)
+    rankname = context.user_data['rankname']
     nric = context.user_data['nric']
     phone = context.user_data['phone']
     auth_key = [str(nric),str(phone)]
     if(auth_key in context.bot_data['approved']):
         context.bot_data['users'][userid]={
             'rankname':rankname,
+            'unit':unit,
             'admin':False
         }
         logger.info('registration complete')
-        bot.send_message(chat_id=update.effective_chat.id, text=f'You have successfully registered as {rankname}.')    
+        bot.send_message(chat_id=update.effective_chat.id, text=f'You have successfully registered as {rankname} from {unit}.')    
     else:
         logger.info('registration pending approval')
-        bot.send_message(chat_id=update.effective_chat.id, text=f'You are now pending registration as {rankname}. Please ask an admin to approve you.') 
+        bot.send_message(chat_id=update.effective_chat.id, text=f'You are now pending registration as {rankname} from {unit}. Please ask an admin to approve you.') 
         context.bot_data['requests'][userid]={
                     'auth_key':auth_key,
-                    'rankname':rankname
+                    'rankname':rankname,
+                    'unit':unit
                 }
         for user in context.bot_data['users'].keys():
             if(context.bot_data['users'][user]['admin']):
-                bot.send_message(chat_id=int(user), text=f'{rankname} has requested approval with NRIC:{auth_key[0]} & phone:{auth_key[1]}. Approve users with /approve.')   
+                bot.send_message(chat_id=int(user), text=f'{rankname}, {unit} has requested approval with NRIC:{auth_key[0]} & phone:{auth_key[1]}. Approve users with /approve.')   
     context.user_data.clear()
     return ConversationHandler.END
+#END OF EDIT
 
 def approve(update: Update, context: CallbackContext) -> int:
     userid = str(update.effective_user.id)
@@ -177,8 +209,9 @@ def approve(update: Update, context: CallbackContext) -> int:
         keyboard = []
         for uid, d in context.bot_data['requests'].items():
             rn = d['rankname']
+            un = d['unit']
             auth_key = d['auth_key']
-            keyboard.append([InlineKeyboardButton(f'{rn} ({auth_key[0]}:{auth_key[1]})', callback_data=str(uid))])
+            keyboard.append([InlineKeyboardButton(f'{rn} {un} ({auth_key[0]}:{auth_key[1]})', callback_data=str(uid))])
         keyboard.append([InlineKeyboardButton(f'Cancel', callback_data=str('cancel'))])
         reply_markup = InlineKeyboardMarkup(keyboard)
         bot.send_message(
@@ -191,6 +224,7 @@ def approve(update: Update, context: CallbackContext) -> int:
             chat_id=update.effective_chat.id,
             text=f'Invalid response! Please try again.')
         return ConversationHandler.END 
+
 
 def approveHandler(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
@@ -206,17 +240,128 @@ def approveHandler(update: Update, context: CallbackContext) -> int:
     auth_user = str(auth_user)
     auth_dict = context.bot_data['requests'].pop(auth_user)
     auth_rankname = auth_dict['rankname']
+    auth_unit = auth_dict['unit']
     context.bot_data['approved'].append(auth_dict['auth_key'])
     context.bot_data['users'][auth_user]={
             'rankname':auth_rankname,
+            'unit':auth_unit,
             'admin':False
         }
     bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f'Approved user {auth_rankname}')
+            text=f'Approved user {auth_rankname} {auth_unit}')
     bot.send_message(
             chat_id=int(auth_user),
             text=f'You have been approved!')
+    return ConversationHandler.END
+
+
+# TODO APPROVE BOOKING BY ADMIN SYSTEM
+
+def insertEvent(booking, booking_facility):
+    service = get_calendar_service()
+    cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
+    calendarId = cal_ids[booking_facility]
+    e = service.events().insert(calendarId=calendarId, body=booking).execute()
+    return e
+
+def approveBooking(update: Update, context: CallbackContext) -> int:
+    userid = str(update.effective_user.id)
+    if('users' in context.bot_data):
+        if(userid not in context.bot_data['users']): # user not registered
+            update.message.reply_text(text='User not registered! Use /start to begin registration')
+            return ConversationHandler.END
+    bot = context.bot
+    if(context.bot_data['users'][userid] is not None):
+        if not context.bot_data['users'][userid]['admin']:
+            bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=f'You are not an admin! Please contact an admin.')
+            return ConversationHandler.END
+    keyboard = []
+    for i,request in enumerate(context.bot_data['booking_requests']):
+        rn = request['rankname']
+        un = request['unit']
+        start = request['start']
+        end = request['end']
+        facility = request['facility']
+        sdt = datetime.fromisoformat(start)
+        edt = datetime.fromisoformat(end)
+        timestring = sdt.strftime('%d/%m %H%M')+'-'+edt.strftime('%H%M')
+        keyboard.append([InlineKeyboardButton(f'{ROOMS[facility]} {timestring} {rn} {un}', callback_data=str(i))])
+    keyboard.append([InlineKeyboardButton(f'Cancel', callback_data=str('cancel'))])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=f'Select a booking from the following:',
+        reply_markup=reply_markup)
+    return SELECT_BOOKING
+
+def approveBookingConfirm(update: Update, context: CallbackContext) -> int:
+    query = update.callback_query
+    req = query.data
+    query.answer()
+    bot = context.bot
+    if(req=='cancel'):
+        bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=f'Action cancelled.')
+        return ConversationHandler.END
+    keyboard = []
+    keyboard.append([InlineKeyboardButton(f'Approve', callback_data=json.dumps([req,True]))])
+    keyboard.append([InlineKeyboardButton(f'Deny', callback_data=json.dumps([req,False]))])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=f'Approve booking?',
+        reply_markup=reply_markup)
+    return APPROVE_BOOKING
+
+
+def approveBookingHandler(update: Update, context: CallbackContext) -> int:
+    query = update.callback_query
+    req = json.loads(query.data)
+    query.answer()
+    bot = context.bot
+    
+    request = context.bot_data['booking_requests'][int(req[0])]
+    rn = request['rankname']
+    user = request['user']
+    un = request['unit']
+    start = request['start']
+    end = request['end']
+    facility = request['facility']
+    sdt = datetime.fromisoformat(start)
+    edt = datetime.fromisoformat(end)
+    dt = sdt.strftime('%d/%m %H%M')+'-'+edt.strftime('%H%M')
+    
+    
+    if not req[1]:
+        bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=f'Denied booking for {ROOMS[facility]} at {dt}')
+        bot.send_message(
+            chat_id=int(user),
+            text=f'Your booking has been denied')
+        return ConversationHandler.END
+    nameunit = rn + ' ' + un
+    booking = {
+        'summary': nameunit,
+        'start': {
+            'dateTime': start,
+        },
+        'end': {
+            'dateTime': end,
+        },
+    }
+    e=insertEvent(booking,facility)    
+    logger.info('Event created: %s' % (e.get('htmlLink')))
+    bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=f'Approved booking for {ROOMS[facility]} at {dt}')
+    bot.send_message(
+            chat_id=int(user),
+            text=f'Your booking has been approved!')
     return ConversationHandler.END
 
 def promote(update: Update, context: CallbackContext) -> int:
@@ -235,9 +380,10 @@ def promote(update: Update, context: CallbackContext) -> int:
     keyboard = []
     for uid, d in context.bot_data['users'].items():
         rn = d['rankname']
+        un = d['unit']
         admin = d['admin']
         if not admin:
-            keyboard.append([InlineKeyboardButton(f'{rn}', callback_data=str(uid))])
+            keyboard.append([InlineKeyboardButton(f'{rn} {un}', callback_data=str(uid))])
     keyboard.append([InlineKeyboardButton(f'Cancel', callback_data=str('cancel'))])
     reply_markup = InlineKeyboardMarkup(keyboard)
     bot.send_message(
@@ -259,10 +405,11 @@ def promoteHandler(update: Update, context: CallbackContext) -> int:
     admin_user = str(admin_user)
     context.bot_data['users'][admin_user]['admin']=True
     admin_rn = context.bot_data['users'][admin_user]['rankname']
+    admin_un = context.bot_data['users'][admin_user]['unit']
     query.answer()
     bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f'Promoted user {admin_rn}')
+            text=f'Promoted user {admin_rn} {admin_un}')
     bot.send_message(
             chat_id=int(admin_user),
             text=f'You have been promoted!')
@@ -292,8 +439,9 @@ def deregister(update: Update, context: CallbackContext) -> None:
         bot.send_message(chat_id=update.effective_chat.id, text=f'User not registered!')
         return
     rname = context.bot_data['users'][userid]['rankname']
+    unit = context.bot_data['users'][userid]['unit']
     context.bot_data['users'].pop(userid)
-    bot.send_message(chat_id=update.effective_chat.id, text=f'User {rname} deregistered.')
+    bot.send_message(chat_id=update.effective_chat.id, text=f'User {rname} from {unit} deregistered.')
     return
     
 def setup(update: Update, context: CallbackContext) -> None:
@@ -369,12 +517,30 @@ def book(update: Update, context: CallbackContext) -> int:   # Registration star
     context.user_data.clear()
     logger.info('Asking user for facility')
     keyboard = [
-        [InlineKeyboardButton(f'{room}', callback_data=i)] for i, room in enumerate(ROOMS)
+        [InlineKeyboardButton(f'{room}', callback_data=i)] for i, room in enumerate(ROOMS[:-1])
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     msgid = update.message.reply_text(text=f'Please select the facility you would like to book', reply_markup=reply_markup).message_id
     context.user_data['msgid'] = msgid
     return ROOM
+
+#EDITED
+def booktrack(update: Update, context: CallbackContext) -> int:  # Tracked Registration start point
+    user = update.effective_user
+    if('users' in context.bot_data):
+        if(str(user.id) not in context.bot_data['users']): # user not registered
+            update.message.reply_text(text='User not registered! Use /start to begin registration')
+            return ConversationHandler.END
+    context.user_data.clear()
+    logger.info('Booking tracked vehicle movement')
+    context.user_data['facility'] = 4
+    bot = context.bot
+    bot.send_message(
+        chat_id=update.effective_chat.id, 
+        text=f'Please enter the date of booking for {TRACK}'
+    )
+    return DATE
+#END OF EDIT
 
 def date(update: Update, context: CallbackContext) -> int:
     query = update.callback_query
@@ -453,11 +619,11 @@ def endtime(update: Update, context: CallbackContext) -> int:
         return TIME2
 
 def bookHandler(update: Update, context: CallbackContext) -> int:
-    service = get_calendar_service()
     end_time = update.message.text
     bot = context.bot
     userid = str(update.effective_user.id)
     rankname = context.bot_data['users'][userid]['rankname']
+    unit = context.bot_data['users'][userid]['unit']
     if(re.match('^([01]?[0-9]|2[0-3])[0-5][0-9]$',end_time) is None):   # input validation for input time format
         try:
             bot.edit_message_text(
@@ -487,6 +653,78 @@ def bookHandler(update: Update, context: CallbackContext) -> int:
         text=f'Processing booking for {bd_str} {booking_time}... please wait'
     )
     start_dt = booking_date+timedelta(hours=float(start_time[:2]), minutes=float(start_time[-2:]))
+    end_dt = booking_date+timedelta(hours=float(end_time[:2]), minutes=float(end_time[-2:]))
+    cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
+    calendarId = cal_ids[booking_facility]
+    event_list = get_event_list([calendarId], start_dt, end_dt)
+    if event_list:
+        booked = event_list[0]['summary']
+        bot.edit_message_text(
+            chat_id=update.effective_chat.id, message_id=context.user_data['msgid'], 
+            text=f'Cannot book {ROOMS[booking_facility]} on {bd_str} {booking_time}. Booking already made by {booked}. Use /cancel to cancel or enter your booking start and end time in 24 hour HHHH-HHHH format.'
+        )
+        return TIME
+    
+    if('booking_requests' not in context.bot_data.keys()):
+        context.bot_data['booking_requests']=[]
+    context.bot_data['booking_requests'].append({
+        'rankname':rankname,
+        'unit':unit,
+        'user':userid,
+        'start':start_dt.isoformat(),
+        'end':end_dt.isoformat(),
+        'facility':booking_facility
+    })
+    for user in context.bot_data['users'].keys():
+        if(context.bot_data['users'][user]['admin']):
+            bot.send_message(chat_id=int(user), text=f'{rankname}, {unit} has requested to book {ROOMS[booking_facility]} on {bd_str} at {booking_time}. Approve bookings with /approve_booking')   
+
+    # logger.info('Event created: %s' % (event.get('htmlLink')))
+    bot.send_message(
+        chat_id=update.effective_chat.id, 
+        text=f'Booking request made for {ROOMS[booking_facility]} on {bd_str} {booking_time}, pending admin approval'
+    )
+    context.user_data.clear()
+    return ConversationHandler.END
+
+#EDITED
+def bookTrackHandler(update: Update, context: CallbackContext) -> int:
+    service = get_calendar_service()
+    end_time = update.message.text
+    bot = context.bot
+    userid = str(update.effective_user.id)
+    rankname = context.bot_data['users'][userid]['rankname']
+    unit = context.bot_data['users'][userid]['unit']
+    nameunit = rankname + ' ' + unit
+    if(re.match('^([01]?[0-9]|2[0-3])[0-5][0-9]$',end_time) is None):   # input validation for input time format
+        try:
+            bot.edit_message_text(
+                chat_id=update.effective_chat.id, message_id=context.user_data['msgid'], 
+                text=f'Incorrect format. Please enter your booking end time in 24 hour HHHH format.'
+            )
+        except:
+            pass
+        return TIME2
+    start_time = context.user_data['start_time']
+    if(start_time>end_time):   # input validation for input time
+        try:
+            bot.edit_message_text(
+                chat_id=update.effective_chat.id, message_id=context.user_data['msgid'], 
+                text=f'End time must be later than start time. Please try again.'
+            )
+        except:
+            pass
+        return TIME2
+    booking_time = start_time+'-'+end_time
+    logger.info(f'booking at {booking_time}')
+    booking_date = datetime.fromisoformat(context.user_data['booking_date']).astimezone(tz)
+    bd_str = booking_date.strftime('%d/%m/%Y')
+    booking_facility = 4
+    bot.edit_message_text(
+        chat_id=update.effective_chat.id, message_id=context.user_data['msgid'], 
+        text=f'Processing booking for {bd_str} {booking_time}... please wait'
+    )
+    start_dt = booking_date+timedelta(hours=float(start_time[:2]), minutes=float(start_time[-2:]))
     logger.info(booking_date.isoformat())
     logger.info(start_dt.isoformat())
     end_dt = booking_date+timedelta(hours=float(end_time[:2]), minutes=float(end_time[-2:]))
@@ -501,23 +739,29 @@ def bookHandler(update: Update, context: CallbackContext) -> int:
             text=f'Cannot book {ROOMS[booking_facility]} on {bd_str} {booking_time}. Booking already made by {booked}. Use /cancel to cancel or enter your booking start and end time in 24 hour HHHH-HHHH format.'
         )
         return TIME
-    booking = {
-        'summary': rankname,
-        'start': {
-            'dateTime': start_dt.isoformat(),
-        },
-        'end': {
-            'dateTime': end_dt.isoformat(),
-        },
-    }
-    event = service.events().insert(calendarId=calendarId, body=booking).execute()
-    logger.info('Event created: %s' % (event.get('htmlLink')))
+    if('booking_requests' not in context.bot_data.keys()):
+        context.bot_data['booking_requests']=[]
+    context.bot_data['booking_requests'].append({
+        'rankname':rankname,
+        'unit':unit,
+        'user':userid,
+        'start':start_dt.isoformat(),
+        'end':end_dt.isoformat(),
+        'facility':booking_facility
+    })
+    for user in context.bot_data['users'].keys():
+        if(context.bot_data['users'][user]['admin']):
+            bot.send_message(chat_id=int(user), text=f'{rankname}, {unit} has requested to book {ROOMS[booking_facility]} on {bd_str} at {booking_time}. Approve bookings with /approve_booking')   
+
+    # event = service.events().insert(calendarId=calendarId, body=booking).execute()
+    # logger.info('Event created: %s' % (event.get('htmlLink')))
     bot.send_message(
         chat_id=update.effective_chat.id, 
-        text=f'Booking made for {ROOMS[booking_facility]} on {bd_str} {booking_time}'
+        text=f'Booking made for {TRACK} on {bd_str} {booking_time}'
     )
     context.user_data.clear()
     return ConversationHandler.END
+#END OF EDIT
     
 def delete(update: Update, context: CallbackContext) -> int:   # Registration start point
     user = update.effective_user
@@ -552,6 +796,8 @@ def bookingDelete(update: Update, context: CallbackContext) -> int:
     logger.info(f'removing booking for {booking_date}')
     userid = str(update.effective_user.id)
     rankname = context.bot_data['users'][userid]['rankname']
+    unit = context.bot_data['users'][userid]['unit']
+    nameunit = rankname + ' ' + unit
     cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
     booking_facility = int(context.user_data['facility'])
     calendarId = cal_ids[booking_facility]
@@ -566,7 +812,7 @@ def bookingDelete(update: Update, context: CallbackContext) -> int:
         end_t = dateparser.parse(e['end']['dateTime']).astimezone(tz).strftime('%H%M')
         name = e['summary']
         id = e['id']
-        if(name==rankname):
+        if(name==nameunit):
             valid = True
             keyboard.append([InlineKeyboardButton(f'[{start_t}-{end_t}]', callback_data=id)])
     if not valid:
@@ -763,8 +1009,12 @@ def main() -> None:
                 MessageHandler(Filters.text & ~Filters.command, rankname)
             ],
             RNAME:   [
-                MessageHandler(Filters.text & ~Filters.command, regHandler)
+                MessageHandler(Filters.text & ~Filters.command, unit)
             ],
+            UNIT1: [
+                CallbackQueryHandler(regHandler),
+                MessageHandler(Filters.text & ~Filters.command, regHandler)
+            ]
         },
         
         fallbacks=[CommandHandler('cancel', cancelReg)],
@@ -818,6 +1068,26 @@ def main() -> None:
     )
     dispatcher.add_handler(book_handler)
     
+    # EDITED
+    # Setup conversation for booking under tracked vehicle movement
+    booktracked_handler = ConversationHandler(
+        entry_points=[CommandHandler('book_tracked', booktrack)],
+        states={
+            DATE: [
+                MessageHandler(Filters.text & ~Filters.command, time1)
+            ],
+            TIME: [
+                MessageHandler(Filters.text & ~Filters.command, endtime)
+            ],
+            TIME2: [
+                MessageHandler(Filters.text & ~Filters.command, bookTrackHandler)
+            ],
+        },
+        fallbacks=[CommandHandler('cancel', cancelReg)],
+    )
+    dispatcher.add_handler(booktracked_handler)
+    #END OF EDIT
+    
     # Setup conversation for booking deletion
     del_handler = ConversationHandler(
         entry_points=[CommandHandler('delete', delete)],
@@ -830,7 +1100,7 @@ def main() -> None:
                 MessageHandler(Filters.text & ~Filters.command, bookingDelete)
             ],
             TIME: [
-                MessageHandler(Filters.text & ~Filters.command, deleteHandler)
+                CallbackQueryHandler(deleteHandler)
             ],
         },
         
@@ -883,11 +1153,13 @@ def main() -> None:
                           port=int(PORT),
                           url_path=TOKEN,
                           webhook_url=f"https://{N}.herokuapp.com/{TOKEN}")
+                          
     # updater.start_polling()
 
     # Run the bot until you press Ctrl-C or the process receives SIGINT,
     # SIGTERM or SIGABRT. This should be used most of the time, since
     # start_polling() is non-blocking and will stop the bot gracefully.
+    
     updater.idle()
 
 if __name__ == '__main__':

@@ -1,1 +1,1 @@
-web: python msvsbotunit.py
+web: python msvsbot.py
