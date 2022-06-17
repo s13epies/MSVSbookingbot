@@ -48,7 +48,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 #static stuff
-ROOMS = ['L1 Ops Hub', 'L1 Mercury Planning Room', 'L2 Venus Planning Room', 'L3 Terra Planning Room','TRACKED VEHICLE MOVEMENT', 'Fortitude', 'Spark', 'Steadfast', 'Gearbox', 'Forward Laager']
+ROOMS = ['L1 Ops Hub', 'L1 Mercury Planning Room', 'L2 Venus Planning Room', 'L3 Terra Planning Room', 'Fortitude', 'Spark', 'Steadfast', 'Gearbox', 'Forward Laager','TRACKED VEHICLE MOVEMENT']
 TRACK = 'TRACKED VEHICLE MOVEMENT' # for tracked booking
 UNIT = ['SBW','AMB','40','41','42','48','ICT/TI','OTHERS'] # Unit
 AUTHTYPE, AUTH, RNAME, UNIT1, UNAME = range(5)   # for registration conversation

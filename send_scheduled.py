@@ -18,7 +18,7 @@ def check_track_movement():
     logger.info(f'BD={bd}')
     booklist = ''
     cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
-    calendarId = cal_ids[4]
+    calendarId = cal_ids[-1]
     daystart_dt = bd
     dayend_dt = (bd+timedelta(days=1))
     event_list = get_event_list([calendarId], daystart_dt, dayend_dt)

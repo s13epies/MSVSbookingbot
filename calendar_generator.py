@@ -23,7 +23,7 @@ from googleapiclient.discovery import build
 SCOPES = ['https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar']
 colors=['pink', 'lightgreen', 'lightblue', 'wheat', 'salmon', 'thistle', 'yellowgreen', 'azure', 'khaki', 'maroon']    
 tz = timezone(timedelta(hours=8))
-ROOMS = ['L1 Ops Hub', 'L1 Mercury\nPlanning Room', 'L2 Venus\nPlanning Room', 'L3 Terra\nPlanning Room', 'TRACKED VEHICLE\nMOVEMENT', 'Fortitude', 'Spark', 'Steadfast', 'Gearbox', 'Forward Laager']
+ROOMS = ['L1 Ops Hub', 'L1 Mercury\nPlanning Room', 'L2 Venus\nPlanning Room', 'L3 Terra\nPlanning Room', 'Fortitude', 'Spark', 'Steadfast', 'Gearbox', 'Forward Laager', 'TRACKED VEHICLE\nMOVEMENT']
 
 logger = logging.getLogger(__name__)
 
