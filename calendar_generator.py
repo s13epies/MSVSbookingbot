@@ -90,7 +90,7 @@ def createImageDay(day:datetime):
     dayend_dt = (day+timedelta(days=1)).astimezone(tz)
     event_list = get_event_list(cal_ids, daystart_dt, dayend_dt)
     
-    plt.figure(figsize=(10, 4))
+    plt.figure(figsize=(10, 8))
     # non days are grayed
     ax = plt.gca().axes
         
@@ -119,7 +119,7 @@ def createImageDay(day:datetime):
     plt.yticks(np.arange(0,5,0.5)+.5, ROOMS)
     plt.grid(axis='x', alpha=0.5, which='minor')
     plt.grid(axis='x', alpha=0.5, which='major', lw=1.2)
-    plt.ylim(0, 5)
+    plt.ylim(0, 10)
     plt.xlim(7.5, 18.5)
 
     plt.title(booking_date)
@@ -155,7 +155,7 @@ def createImageWeek(facility:int):
         if(end<7 or start>18):
             continue
         # plot event
-        ax.add_patch(Rectangle((end, day), width=(start-end), height=1, color=colors[day-1], alpha=1, ec='k',lw=0.7))
+        ax.add_patch(Rectangle((end, day), width=(start-end), height=0.5, color=colors[day-1], alpha=1, ec='k',lw=0.7))
         #plot name of booking
         plt.text((start+end)/2, day+0.5, f'''{event}''', va='center', ha='center', fontsize=5)
         # plot beginning time
