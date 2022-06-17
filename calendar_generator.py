@@ -24,7 +24,6 @@ SCOPES = ['https://www.googleapis.com/auth/calendar.events', 'https://www.google
 colors=['pink', 'lightgreen', 'lightblue', 'wheat', 'salmon', 'thistle', 'yellowgreen', 'azure', 'khaki', 'maroon']    
 tz = timezone(timedelta(hours=8))
 ROOMS = ['L1 Ops Hub', 'L1 Mercury\nPlanning Room', 'L2 Venus\nPlanning Room', 'L3 Terra\nPlanning Room', 'Fortitude', 'Spark', 'Steadfast', 'Gearbox', 'Forward Laager', 'TRACKED VEHICLE\nMOVEMENT']
-
 logger = logging.getLogger(__name__)
 
 def get_event_list(calendarIds: list, start: datetime, end: datetime) -> list:

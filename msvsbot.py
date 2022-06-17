@@ -51,6 +51,8 @@ logger = logging.getLogger(__name__)
 ROOMS = ['L1 Ops Hub', 'L1 Mercury Planning Room', 'L2 Venus Planning Room', 'L3 Terra Planning Room', 'Fortitude', 'Spark', 'Steadfast', 'Gearbox', 'Forward Laager','TRACKED VEHICLE MOVEMENT']
 TRACK = 'TRACKED VEHICLE MOVEMENT' # for tracked booking
 UNIT = ['SBW','AMB','40','41','42','48','ICT/TI','OTHERS'] # Unit
+ROOM_VALIDATOR = [1,1,1,1,1,1,1,0,0,1]
+RVNAME = ['S3/S4 1AMB', 'Camp Ops Manager, SBW']
 AUTHTYPE, AUTH, RNAME, UNIT1, UNAME = range(5)   # for registration conversation
 NRIC, PHONE = range(2)  # registration authentication type
 ROOM, DATE, TIME, TIME2 = range(4) # for booking conversation
@@ -709,24 +711,24 @@ def bookHandler(update: Update, context: CallbackContext) -> int:
     for user in context.bot_data['users'].keys():
         if(context.bot_data['users'][user]['admin']):
             bot.send_message(chat_id=int(user), text=f'{rankname}, {unit} has requested to book {ROOMS[booking_facility]} on {bd_str} at {booking_time}. Approve bookings with /approve_booking')   
-
+    approval = RVNAME[ROOM_VALIDATOR[booking_facility]]
     # logger.info('Event created: %s' % (event.get('htmlLink')))
     bot.send_message(
         chat_id=update.effective_chat.id, 
-        text=f'Booking request made for {ROOMS[booking_facility]} on {bd_str} {booking_time}, pending admin approval'
+        text=f'Booking request made for {ROOMS[booking_facility]} on {bd_str} {booking_time}, pending approval from {approval}'
     )
     context.user_data.clear()
     return ConversationHandler.END
 
 #EDITED
 def bookTrackHandler(update: Update, context: CallbackContext) -> int:
-    service = get_calendar_service()
+    # service = get_calendar_service()
     end_time = update.message.text
     bot = context.bot
     userid = str(update.effective_user.id)
     rankname = context.bot_data['users'][userid]['rankname']
     unit = context.bot_data['users'][userid]['unit']
-    nameunit = rankname + ' ' + unit
+    # nameunit = rankname + ' ' + unit
     if(re.match('^([01]?[0-9]|2[0-3])[0-5][0-9]$',end_time) is None):   # input validation for input time format
         try:
             bot.edit_message_text(
@@ -783,12 +785,12 @@ def bookTrackHandler(update: Update, context: CallbackContext) -> int:
     for user in context.bot_data['users'].keys():
         if(context.bot_data['users'][user]['admin']):
             bot.send_message(chat_id=int(user), text=f'{rankname}, {unit} has requested to book {ROOMS[booking_facility]} on {bd_str} at {booking_time}. Approve bookings with /approve_booking')   
-
+    approval = RVNAME[ROOM_VALIDATOR[booking_facility]]
     # event = service.events().insert(calendarId=calendarId, body=booking).execute()
     # logger.info('Event created: %s' % (event.get('htmlLink')))
     bot.send_message(
         chat_id=update.effective_chat.id, 
-        text=f'Booking reqest made for {TRACK} on {bd_str} {booking_time}'
+        text=f'Booking request made for {TRACK} on {bd_str} {booking_time}, pending approval from {approval}'
     )
     context.user_data.clear()
     return ConversationHandler.END
