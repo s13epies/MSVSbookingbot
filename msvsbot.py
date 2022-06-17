@@ -382,6 +382,7 @@ def approveBookingHandler(update: Update, context: CallbackContext) -> int:
         bot.send_message(
             chat_id=int(user),
             text=f'Your booking has been denied')
+        context.bot_data['booking_requests'].pop(int(req[0]))
         return ConversationHandler.END
     
     context.bot_data['booking_requests'].pop(int(req[0]))
