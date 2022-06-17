@@ -210,11 +210,11 @@ def createImageAll(now=None):
         # plot event
         ax.add_patch(Rectangle((end, (day+((room)/10))), width=(start-end), height=0.1, color=colors[room], alpha=1, ec='k',lw=0.7))
         #plot name of booking
-        plt.text((start+end)/2, (day+((room)/10))+0.1, f'''{event}''', va='center', ha='center', fontsize=5)
+        plt.text((start+end)/2, (day+((room)/10))+0.05, f'''{event}''', va='center', ha='center', fontsize=5)
         # plot beginning time
         plt.text(start+0.01, (day+((room)/10))+0.01, f'''{start_t.strftime('%H:%M')}''', va='top', fontsize=4)
         #plot end time
-        plt.text(end-0.01, (day+((room)/10))+0.19, f'''{end_t.strftime('%H:%M')}''', va='bottom', ha='right', fontsize=4)
+        plt.text(end-0.01, (day+((room)/10))+0.09, f'''{end_t.strftime('%H:%M')}''', va='bottom', ha='right', fontsize=4)
 
     plt.xticks(np.arange(7,19), [f'{n:02}:00' for n in np.arange(7,19)])
     ax.set_xticks(np.arange(7,19,0.25), minor=True)
