@@ -108,18 +108,18 @@ def createImageDay(day:datetime):
         # plot event
         ax.add_patch(Rectangle((end, room), width=(start-end), height=0.5, color=colors[room], alpha=1, ec='k',lw=0.7))
         #plot name of booking
-        plt.text((start+end)/2, room+0.5, f'''{event}''', va='center', ha='center', fontsize=5)
+        plt.text((start+end)/2, room+0.25, f'''{event}''', va='center', ha='center', fontsize=5)
         # plot beginning time
-        plt.text(start+0.02, room+0.95, f'''{start_t.strftime('%H:%M')}''', va='top', fontsize=4)
+        plt.text(start+0.01, room+0.48, f'''{start_t.strftime('%H:%M')}''', va='top', fontsize=4)
         #plot end time
-        plt.text(end-0.02, room+0.05, f'''{end_t.strftime('%H:%M')}''', va='bottom', ha='right', fontsize=4)
+        plt.text(end-0.01, room+0.02, f'''{end_t.strftime('%H:%M')}''', va='bottom', ha='right', fontsize=4)
 
     plt.xticks(np.arange(7,19), [f'{n:02}:00' for n in np.arange(7,19)])
     ax.set_xticks(np.arange(7,19,0.25), minor=True)
     plt.yticks(np.arange(0,5,0.5)+.5, ROOMS)
     plt.grid(axis='x', alpha=0.5, which='minor')
     plt.grid(axis='x', alpha=0.5, which='major', lw=1.2)
-    plt.ylim(0, 10)
+    plt.ylim(0, 5)
     plt.xlim(7.5, 18.5)
 
     plt.title(booking_date)
@@ -155,7 +155,7 @@ def createImageWeek(facility:int):
         if(end<7 or start>18):
             continue
         # plot event
-        ax.add_patch(Rectangle((end, day), width=(start-end), height=0.5, color=colors[day-1], alpha=1, ec='k',lw=0.7))
+        ax.add_patch(Rectangle((end, day), width=(start-end), height=1, color=colors[day-1], alpha=1, ec='k',lw=0.7))
         #plot name of booking
         plt.text((start+end)/2, day+0.5, f'''{event}''', va='center', ha='center', fontsize=5)
         # plot beginning time
@@ -208,7 +208,7 @@ def createImageAll(now=None):
         if(end<7 or start>18):
             continue
         # plot event
-        ax.add_patch(Rectangle((end, (day+((room)/10))), width=(start-end), height=0.2, color=colors[room], alpha=1, ec='k',lw=0.7))
+        ax.add_patch(Rectangle((end, (day+((room)/10))), width=(start-end), height=0.1, color=colors[room], alpha=1, ec='k',lw=0.7))
         #plot name of booking
         plt.text((start+end)/2, (day+((room)/10))+0.1, f'''{event}''', va='center', ha='center', fontsize=5)
         # plot beginning time
