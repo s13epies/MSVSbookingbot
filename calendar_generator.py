@@ -107,7 +107,7 @@ def createImageDay(day:datetime):
         if(end<7 or start>18):
             continue
         # plot event
-        ax.add_patch(Rectangle((end, room), width=(start-end), height=1, color=colors[room], alpha=1, ec='k',lw=0.7))
+        ax.add_patch(Rectangle((end, room), width=(start-end), height=0.5, color=colors[room], alpha=1, ec='k',lw=0.7))
         #plot name of booking
         plt.text((start+end)/2, room+0.5, f'''{event}''', va='center', ha='center', fontsize=5)
         # plot beginning time
@@ -117,7 +117,7 @@ def createImageDay(day:datetime):
 
     plt.xticks(np.arange(7,19), [f'{n:02}:00' for n in np.arange(7,19)])
     ax.set_xticks(np.arange(7,19,0.25), minor=True)
-    plt.yticks(np.arange(0,5)+.5, ROOMS)
+    plt.yticks(np.arange(0,5,0.5)+.5, ROOMS)
     plt.grid(axis='x', alpha=0.5, which='minor')
     plt.grid(axis='x', alpha=0.5, which='major', lw=1.2)
     plt.ylim(0, 5)
