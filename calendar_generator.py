@@ -21,9 +21,10 @@ from googleapiclient.discovery import build
 
 # PERMISSIONS FOR API ACCESS
 SCOPES = ['https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar']
-
+colors=['pink', 'lightgreen', 'lightblue', 'wheat', 'salmon', 'thistle', 'yellowgreen', 'azure', 'khaki', 'maroon']    
 tz = timezone(timedelta(hours=8))
-ROOMS = ['L1 Ops Hub', 'L1 Mercury\nPlanning Room', 'L2 Venus\nPlanning Room', 'L3 Terra\nPlanning Room', 'TRACKED VEHICLE\nMOVEMENT']
+ROOMS = ['L1 Ops Hub', 'L1 Mercury\nPlanning Room', 'L2 Venus\nPlanning Room', 'L3 Terra\nPlanning Room', 'TRACKED VEHICLE\nMOVEMENT', 'Fortitude', 'Spark', 'Steadfast', 'Gearbox', 'Forward Laager']
+
 logger = logging.getLogger(__name__)
 
 def get_event_list(calendarIds: list, start: datetime, end: datetime) -> list:
@@ -84,7 +85,6 @@ def get_calendar_service():
     return service
 
 def createImageDay(day:datetime):
-    colors=['pink', 'lightgreen', 'lightblue', 'wheat', 'salmon']    
     booking_date = day.strftime('%d/%m/%Y')
     cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
     daystart_dt = day.astimezone(tz)
@@ -132,7 +132,6 @@ def createImageDay(day:datetime):
     return buf
 
 def createImageWeek(facility:int):
-    colors=['pink', 'lightgreen', 'lightblue', 'wheat', 'salmon']    
     weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday']
     cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
     now = datetime.now()
@@ -183,7 +182,7 @@ def createImageWeek(facility:int):
     return buf
 
 def createImageAll(now=None):
-    colors=['pink', 'lightgreen', 'lightblue', 'wheat', 'salmon']    
+    
     weekdays = ['Monday','Tuesday','Wednesday','Thursday','Friday']
     cal_ids = json.loads(os.environ.get("CALENDAR_ID"))
     if now is None:
@@ -193,7 +192,7 @@ def createImageAll(now=None):
     weekstart_dt = monday.astimezone(tz)
     weekend_dt = (monday+timedelta(days=5)).astimezone(tz)
     event_list = get_event_list(cal_ids, weekstart_dt, weekend_dt)
-    plt.figure(figsize=(12, 7))
+    plt.figure(figsize=(12, 14))
     # non days are grayed
     ax = plt.gca().axes
         
@@ -210,13 +209,13 @@ def createImageAll(now=None):
         if(end<7 or start>18):
             continue
         # plot event
-        ax.add_patch(Rectangle((end, (day+((room)/5))), width=(start-end), height=0.2, color=colors[room], alpha=1, ec='k',lw=0.7))
+        ax.add_patch(Rectangle((end, (day+((room)/10))), width=(start-end), height=0.2, color=colors[room], alpha=1, ec='k',lw=0.7))
         #plot name of booking
-        plt.text((start+end)/2, (day+((room)/5))+0.1, f'''{event}''', va='center', ha='center', fontsize=5)
+        plt.text((start+end)/2, (day+((room)/10))+0.1, f'''{event}''', va='center', ha='center', fontsize=5)
         # plot beginning time
-        plt.text(start+0.01, (day+((room)/5))+0.01, f'''{start_t.strftime('%H:%M')}''', va='top', fontsize=4)
+        plt.text(start+0.01, (day+((room)/10))+0.01, f'''{start_t.strftime('%H:%M')}''', va='top', fontsize=4)
         #plot end time
-        plt.text(end-0.01, (day+((room)/5))+0.19, f'''{end_t.strftime('%H:%M')}''', va='bottom', ha='right', fontsize=4)
+        plt.text(end-0.01, (day+((room)/10))+0.19, f'''{end_t.strftime('%H:%M')}''', va='bottom', ha='right', fontsize=4)
 
     plt.xticks(np.arange(7,19), [f'{n:02}:00' for n in np.arange(7,19)])
     ax.set_xticks(np.arange(7,19,0.25), minor=True)
@@ -249,10 +248,12 @@ def generate_keys64():
 # TESTING FUNCTION, IGNORE
 def main() -> None:
     '''init_testing_local()
-    today = datetime.combine(datetime.now().date(), datetime.min.time(), tzinfo=tz)
-    with open('out.png','wb') as outfile:
-        outfile.write(createImageAll().read())'''
-    logger.info(generate_keys64())
+    today = datetime.combine(datetime.now().date(), datetime.min.time(), tzinfo=tz)'''
+    
+    k64 = generate_keys64()
+    with open('key64.txt','wb') as outfile:
+        outfile.write(k64)
+        print(k64)
     return
 
 if __name__ == '__main__':

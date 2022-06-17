@@ -48,7 +48,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 #static stuff
-ROOMS = ['L1 Ops Hub', 'L1 Mercury Planning Room', 'L2 Venus Planning Room', 'L3 Terra Planning Room','TRACKED VEHICLE MOVEMENT']
+ROOMS = ['L1 Ops Hub', 'L1 Mercury Planning Room', 'L2 Venus Planning Room', 'L3 Terra Planning Room','TRACKED VEHICLE MOVEMENT', 'Fortitude', 'Spark', 'Steadfast', 'Gearbox', 'Forward Laager']
 TRACK = 'TRACKED VEHICLE MOVEMENT' # for tracked booking
 UNIT = ['SBW','AMB','40','41','42','48','ICT/TI','OTHERS'] # Unit
 AUTHTYPE, AUTH, RNAME, UNIT1, UNAME = range(5)   # for registration conversation
@@ -788,7 +788,7 @@ def bookTrackHandler(update: Update, context: CallbackContext) -> int:
     # logger.info('Event created: %s' % (event.get('htmlLink')))
     bot.send_message(
         chat_id=update.effective_chat.id, 
-        text=f'Booking made for {TRACK} on {bd_str} {booking_time}'
+        text=f'Booking reqest made for {TRACK} on {bd_str} {booking_time}'
     )
     context.user_data.clear()
     return ConversationHandler.END
