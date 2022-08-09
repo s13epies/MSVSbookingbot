@@ -1064,7 +1064,7 @@ if('postgresql' not in DATABASE_URL):
     DATABASE_URL = DATABASE_URL.replace('postgres','postgresql',1)
     
 pers = PostgresPersistence(url=DATABASE_URL)'''
-with open('msvs-bot-firebase-adminsdk-4s2k3-5fe321f7b7.json') as credfile:
+with open('firebasecred.json') as credfile:
     cred = json.load(credfile)
 pers = FirebasePersistence(database_url='https://msvs-bot-default-rtdb.firebaseio.com/', credentials=cred)
 # updater = Updater(TOKEN, persistence=pers)
