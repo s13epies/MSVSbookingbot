@@ -1053,11 +1053,11 @@ def init_testing_json():
 app = Flask(__name__)
 """Start the bot."""
 # Create the Updater and pass it your bot's token.
-init_testing_json()
+init_testing_deploy()
 # init_testing_deploy()
 
 TOKEN = os.environ.get('TELE_BOT_TOKEN')
-N = 'msvs-bot'
+# N = 'msvs-bot'
 '''
 DATABASE_URL = os.environ['DATABASE_URL']
 if('postgresql' not in DATABASE_URL):
@@ -1069,6 +1069,7 @@ with open('msvs-bot-firebase-adminsdk-4s2k3-5fe321f7b7.json') as credfile:
 pers = FirebasePersistence(database_url='https://msvs-bot-default-rtdb.firebaseio.com/', credentials=cred)
 # updater = Updater(TOKEN, persistence=pers)
 bot = Bot(token=TOKEN)
+bot.set_webhook("https://msvsbookingbot-uubulot4qa-uc.a.run.app/"+TOKEN)
 dispatcher = Dispatcher(bot=bot, update_queue=None, persistence=pers)
 # Get the dispatcher to register handlers
 # dispatcher = updater.dispatcher
@@ -1250,9 +1251,17 @@ dispatcher.add_error_handler(error_handler)
 
 # updater.idle()
     
-@app.post("/")
-def index() -> Response:
-    dispatcher.process_update(
-        Update.de_json(request.get_json(force=True), bot))
 
-    return "", http.HTTPStatus.NO_CONTENT
+@app.route('/')
+def index():
+    return "Hello!"
+
+# create view to handle webhooks
+@app.route(f'/{TOKEN}', methods=['GET', 'POST'])
+def webhook():
+    """webhook view which receives updates from telegram"""
+    # create update object from json-format request data
+    update = Update.de_json(request.get_json(), bot)
+    # process update
+    dispatcher.process_update(update)
+    return "ok"

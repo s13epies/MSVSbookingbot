@@ -23,6 +23,7 @@ from telegram.ext import (
     MessageHandler,
     Filters,
 )
+from firebasepersistence import FirebasePersistence
 from postgrespersistence import PostgresPersistence
 import re
 import os
@@ -1023,11 +1024,13 @@ def main() -> None:
     
     TOKEN = os.environ.get('TELE_BOT_TOKEN')
     N = 'msvs-bot'
+    '''
     DATABASE_URL = os.environ['DATABASE_URL']
     if('postgresql' not in DATABASE_URL):
         DATABASE_URL = DATABASE_URL.replace('postgres','postgresql',1)
         
-    pers = PostgresPersistence(url=DATABASE_URL)
+    pers = PostgresPersistence(url=DATABASE_URL)'''
+    pers = FirebasePersistence(database_url='https://console.firebase.google.com/u/0/project/msvs-bot/database/msvs-bot-default-rtdb/data/~2F', credentials=json.load('msvs-bot-firebase-adminsdk-4s2k3-5fe321f7b7.json'))
     updater = Updater(TOKEN, persistence=pers)
 
     # Get the dispatcher to register handlers
