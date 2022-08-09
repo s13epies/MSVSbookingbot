@@ -1066,7 +1066,7 @@ if('postgresql' not in DATABASE_URL):
 pers = PostgresPersistence(url=DATABASE_URL)'''
 with open('firebasecred.json') as credfile:
     cred = json.load(credfile)
-pers = FirebasePersistence(database_url='https://msvs-bot-default-rtdb.firebaseio.com/', credentials=cred)
+pers = FirebasePersistence().from_environment()
 # updater = Updater(TOKEN, persistence=pers)
 bot = Bot(token=TOKEN)
 bot.set_webhook("https://msvsbookingbot-uubulot4qa-uc.a.run.app/"+TOKEN)
