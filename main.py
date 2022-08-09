@@ -1063,9 +1063,9 @@ DATABASE_URL = os.environ['DATABASE_URL']
 if('postgresql' not in DATABASE_URL):
     DATABASE_URL = DATABASE_URL.replace('postgres','postgresql',1)
     
-pers = PostgresPersistence(url=DATABASE_URL)'''
+pers = PostgresPersistence(url=DATABASE_URL)
 with open('firebasecred.json') as credfile:
-    cred = json.load(credfile)
+    cred = json.load(credfile)'''
 pers = FirebasePersistence().from_environment()
 # updater = Updater(TOKEN, persistence=pers)
 bot = Bot(token=TOKEN)
