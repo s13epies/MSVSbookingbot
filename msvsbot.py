@@ -155,7 +155,7 @@ def regHandler(update: Update, context: CallbackContext) -> int:
     rankname = context.user_data['rankname']
     nric = context.user_data['nric']
     phone = context.user_data['phone']
-    auth_key = [str(nric),str(phone)]
+    auth_key = (str(nric),str(phone))
     if(auth_key in context.bot_data['approved']):
         context.bot_data['users'][userid]={
             'rankname':rankname,
